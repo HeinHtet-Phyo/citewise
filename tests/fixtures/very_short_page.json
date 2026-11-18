@@ -1,0 +1,10 @@
+{
+  "base_path": "/apply-blue-badge",
+  "title": "Apply for a Blue Badge",
+  "document_type": "answer",
+  "locale": "en",
+  "public_updated_at": "2024-02-01T09:00:00Z",
+  "details": {
+    "body": "<p>You can apply for a Blue Badge if you have severe walking difficulties or are registered blind.</p>"
+  }
+}

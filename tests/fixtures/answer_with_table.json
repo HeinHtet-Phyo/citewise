@@ -1,0 +1,10 @@
+{
+  "base_path": "/income-tax-rates",
+  "title": "Income Tax rates and Personal Allowances",
+  "document_type": "answer",
+  "locale": "en",
+  "public_updated_at": "2024-04-06T10:00:00Z",
+  "details": {
+    "body": "<p>The standard Personal Allowance is £12,570, which is the amount of income you do not have to pay tax on.</p><h2>Income Tax rates</h2><table><tr><th>Band</th><th>Taxable income</th><th>Tax rate</th></tr><tr><td>Personal Allowance</td><td>Up to £12,570</td><td>0%</td></tr><tr><td>Basic rate</td><td>£12,571 to £50,270</td><td>20%</td></tr><tr><td>Higher rate</td><td>£50,271 to £125,140</td><td>40%</td></tr><tr><td>Additional rate</td><td>over £125,140</td><td>45%</td></tr></table>"
+  }
+}

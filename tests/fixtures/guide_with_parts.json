@@ -1,0 +1,21 @@
+{
+  "base_path": "/statutory-sick-pay",
+  "title": "Statutory Sick Pay (SSP)",
+  "document_type": "guide",
+  "locale": "en",
+  "public_updated_at": "2024-01-15T12:00:00Z",
+  "details": {
+    "parts": [
+      {
+        "slug": "overview",
+        "title": "Overview",
+        "body": "<p>You can get <strong>£116.75</strong> per week Statutory Sick Pay (SSP) if you're too ill to work. It's paid by your employer for up to 28 weeks.</p><h2>Eligibility</h2><p>You must be an employee and have been ill for at least 4 days in a row (including non-working days).</p>"
+      },
+      {
+        "slug": "what-you-ll-get",
+        "title": "What you'll get",
+        "body": "<p>SSP is £116.75 a week. Your employer pays it in the same way as your normal wages.</p><h2>Tax and National Insurance</h2><p>SSP is subject to tax and National Insurance in the usual way.</p>"
+      }
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+# Virtual environment
+.venv/
+
+# Environment variables — never commit
+.env
+*.env
+apikey.env
+
+# Data directories — large, re-creatable
+data/raw/
+data/cache/
+.llm_cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Private notes — not for public repo
+private/
+
+# Docker
+*.log

@@ -98,7 +98,8 @@ _CONFIGS: dict[str, RagConfig] = {
         top_k_context=6,
     ),
 }
-_DEFAULT_CONFIG = "hybrid_400_rerank"
+# Live demo defaults to dense_400: no reranker or BM25 model, so it fits in 512 MB on Render free.
+_DEFAULT_CONFIG = "dense_400"
 
 
 class AskRequest(BaseModel):

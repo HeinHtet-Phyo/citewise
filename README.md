@@ -160,7 +160,9 @@ The app is deployed to [Render.com](https://render.com) free tier using `render.
    - `QDRANT_URL` — the Qdrant Cloud cluster URL
    - `QDRANT_API_KEY` — the Qdrant Cloud API key
 
-**Memory:** 247 MB idle, 367 MB peak (measured locally) — fits within Render's 512 MB free tier.
+**Live demo config:** the deployed app uses `dense_400` (dev composite 1.77) rather than `hybrid_400_rerank` (1.78), because the reranker and BM25 model exceeded Render's 512 MB free tier. No test-split run was made for `dense_400`.
+
+**Memory (local Docker, hybrid_400_rerank):** 247 MB idle, 367 MB peak (measured locally) — fits within Render's 512 MB free tier.
 
 **Cold start note:** Render free tier sleeps after 15 minutes of inactivity. The first request after wakeup downloads ~300 MB of fastembed model files and takes ~60 seconds. Subsequent requests are fast.
 

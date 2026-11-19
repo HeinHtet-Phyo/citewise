@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
+from fastembed.sparse.sparse_embedding_base import SparseEmbedding
+from qdrant_client.models import SparseVector
 
 from citewise.index.embed import (
     DENSE_DIM,
@@ -15,8 +17,6 @@ from citewise.index.embed import (
     embed_sparse,
     embed_sparse_single,
 )
-from fastembed.sparse.sparse_embedding_base import SparseEmbedding
-from qdrant_client.models import SparseVector
 
 
 def _fake_dense_model(texts: list[str], batch_size: int) -> list[np.ndarray]:

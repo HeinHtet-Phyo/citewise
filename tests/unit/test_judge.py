@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -72,19 +71,11 @@ def test_judge_answer_uses_cache(monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     monkeypatch.setattr("judge.settings.llm_cache_enabled", True)
     monkeypatch.setattr("judge.settings.llm_cache_dir", str(tmp_path))
 
+    import json as _json
+
     cached_text = '{"faithfulness": 2, "relevance": 2, "citation_quality": 2, "rationale": "Cached."}'
-    from judge import _prompt_hash, _JUDGE_MODEL
-    messages = [
-        {"role": "system", "content": "stub"},
-        {"role": "user", "content": "stub"},
-    ]
 
     # Pre-populate cache with a known response
-    import hashlib, json as _json
-    real_hash = _prompt_hash
-
-    llm_called = {"count": 0}
-
     def fake_hash(model: str, msgs: list) -> str:
         return "fakehash"
 

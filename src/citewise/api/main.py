@@ -2,16 +2,21 @@
 
 Endpoints:
   GET  /          → serve index.html
-  GET  /health    → {"status": "ok"}
+  GET  /health    → {"status": "ok", "model": ..., "git_sha": ...}
+  GET  /configs   → available RAG configs
   POST /ask       → run the RAG pipeline and return an Answer
 """
 
 from __future__ import annotations
 
 import logging
+import subprocess
+from collections import defaultdict
 from pathlib import Path
+from time import time
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -24,16 +29,39 @@ log = logging.getLogger(__name__)
 
 _STATIC_DIR = Path(__file__).parent / "static"
 
+# In-memory rate limiter — 10 requests per minute per IP.
+_rate_buckets: dict[str, list[float]] = defaultdict(list)
+_RATE_LIMIT = 10
+_RATE_WINDOW = 60.0
+
+
+async def _rate_limit(request: Request) -> None:
+    """Raise 429 if the caller exceeds 10 requests per minute."""
+    ip = request.client.host if request.client else "unknown"
+    now = time()
+    bucket = _rate_buckets[ip]
+    _rate_buckets[ip] = [t for t in bucket if now - t < _RATE_WINDOW]
+    if len(_rate_buckets[ip]) >= _RATE_LIMIT:
+        raise HTTPException(status_code=429, detail="Rate limit: 10 requests/minute. Please wait.")
+    _rate_buckets[ip].append(now)
+
+
 app = FastAPI(
     title="Citewise",
     description="UK government guidance, answered with citations.",
     version="0.1.0",
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
+)
+
 app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 
-
-# Named configs exposed to the UI — mirrors generate_candidates.CONFIGS.
+# Named configs — hybrid_400_rerank is the tuned best config (threshold tuned on dev split).
 _CONFIGS: dict[str, RagConfig] = {
     "hybrid_400_rerank": RagConfig(
         config_name="hybrid_400_rerank",
@@ -43,6 +71,7 @@ _CONFIGS: dict[str, RagConfig] = {
         top_k_retrieve=30,
         use_reranker=True,
         top_k_context=6,
+        refusal_threshold=0.3,
     ),
     "dense_400": RagConfig(
         config_name="dense_400",
@@ -55,6 +84,16 @@ _CONFIGS: dict[str, RagConfig] = {
     ),
 }
 _DEFAULT_CONFIG = "hybrid_400_rerank"
+
+
+def _git_sha() -> str:
+    """Return the current HEAD SHA (first 7 chars), or 'unknown'."""
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"], text=True, stderr=subprocess.DEVNULL
+        ).strip()
+    except Exception:
+        return "unknown"
 
 
 class AskRequest(BaseModel):
@@ -71,7 +110,14 @@ async def index() -> FileResponse:
 
 @app.get("/health")
 async def health() -> JSONResponse:
-    return JSONResponse({"status": "ok"})
+    return JSONResponse(
+        {
+            "status": "ok",
+            "model": _CONFIGS[_DEFAULT_CONFIG].llm_model,
+            "default_config": _DEFAULT_CONFIG,
+            "git_sha": _git_sha(),
+        }
+    )
 
 
 @app.get("/configs")
@@ -80,13 +126,16 @@ async def list_configs() -> JSONResponse:
 
 
 @app.post("/ask", response_model=Answer)
-async def ask(request: AskRequest) -> Answer:
+async def ask(
+    body: AskRequest,
+    _: None = Depends(_rate_limit),
+) -> Answer:
     """Run the RAG pipeline for the given question and return a structured Answer."""
-    if request.config_name not in _CONFIGS:
+    if body.config_name not in _CONFIGS:
         raise HTTPException(
             status_code=400,
-            detail=f"Unknown config '{request.config_name}'. Available: {list(_CONFIGS)}",
+            detail=f"Unknown config '{body.config_name}'. Available: {list(_CONFIGS)}",
         )
-    config = _CONFIGS[request.config_name]
-    log.info("POST /ask config=%s question=%.60s", config.config_name, request.question)
-    return answer_question(request.question, config)
+    config = _CONFIGS[body.config_name]
+    log.info("POST /ask config=%s question=%.60s", config.config_name, body.question)
+    return answer_question(body.question, config)

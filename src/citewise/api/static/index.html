@@ -35,7 +35,7 @@
       background: #fff;
       border: 2px solid #0b0c0c;
       padding: 20px;
-      margin-bottom: 24px;
+      margin-bottom: 16px;
     }
     .search-box label {
       display: block;
@@ -61,7 +61,7 @@
     }
     input[type="text"]:focus { border-color: #fd0; box-shadow: inset 0 0 0 2px #0b0c0c; }
 
-    button {
+    button.primary {
       background: #00703c;
       color: #fff;
       border: none;
@@ -71,8 +71,25 @@
       cursor: pointer;
       white-space: nowrap;
     }
-    button:hover { background: #005a30; }
-    button:disabled { background: #b1b4b6; cursor: default; }
+    button.primary:hover { background: #005a30; }
+    button.primary:disabled { background: #b1b4b6; cursor: default; }
+
+    .examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .example-chip {
+      background: #fff;
+      border: 1px solid #b1b4b6;
+      color: #1d70b8;
+      font-size: 13px;
+      padding: 5px 12px;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+    .example-chip:hover { background: #e8f1fb; border-color: #1d70b8; }
 
     .answer-card {
       background: #fff;
@@ -99,6 +116,7 @@
       margin-top: 12px;
       display: flex;
       gap: 20px;
+      flex-wrap: wrap;
     }
 
     .citations-heading {
@@ -179,9 +197,78 @@
     }
     .error-banner.visible { display: block; }
 
+    details.how-it-works {
+      background: #fff;
+      border: 1px solid #b1b4b6;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+    details.how-it-works summary {
+      cursor: pointer;
+      font-weight: bold;
+      color: #0b0c0c;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    details.how-it-works summary::before {
+      content: "▶";
+      font-size: 10px;
+      color: #505a5f;
+      transition: transform 0.15s;
+    }
+    details.how-it-works[open] summary::before { transform: rotate(90deg); }
+    details.how-it-works .body {
+      margin-top: 12px;
+      color: #0b0c0c;
+      line-height: 1.6;
+    }
+    details.how-it-works .pipeline-steps {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 10px 0;
+    }
+    details.how-it-works .step {
+      background: #f3f2f1;
+      border: 1px solid #b1b4b6;
+      padding: 4px 10px;
+      font-size: 13px;
+      border-radius: 2px;
+    }
+    details.how-it-works .step::after {
+      content: " →";
+      color: #505a5f;
+    }
+    details.how-it-works .step:last-child::after { content: ""; }
+    details.how-it-works table {
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 8px;
+      width: 100%;
+    }
+    details.how-it-works th, details.how-it-works td {
+      border: 1px solid #b1b4b6;
+      padding: 5px 10px;
+      text-align: left;
+    }
+    details.how-it-works th { background: #f3f2f1; font-weight: bold; }
+    details.how-it-works tr.best { background: #e8f8f0; }
+
+    .notice {
+      border-left: 4px solid #b1b4b6;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #505a5f;
+      margin-bottom: 24px;
+      background: #fff;
+    }
+
     @media (max-width: 600px) {
       .input-row { flex-direction: column; }
-      button { width: 100%; }
+      button.primary { width: 100%; }
     }
   </style>
 </head>
@@ -198,18 +285,60 @@
 </header>
 
 <main>
+
+  <div class="notice">
+    Unofficial portfolio project — not affiliated with GOV.UK or HMRC.
+    Answers may be incomplete or out of date. Always verify with
+    <a href="https://www.gov.uk" target="_blank" rel="noopener" style="color:#1d70b8">gov.uk</a>.
+  </div>
+
   <div class="search-box">
     <label for="question">Ask a question about UK government guidance</label>
     <p class="hint">Benefits, employment rights, housing, driving — answers sourced from GOV.UK.</p>
     <div class="input-row">
       <input type="text" id="question" placeholder="e.g. Am I entitled to Statutory Sick Pay?" autocomplete="off">
-      <button id="askBtn" onclick="ask()">Ask</button>
+      <button class="primary" id="askBtn" onclick="ask()">Ask</button>
     </div>
+  </div>
+
+  <div class="examples">
+    <button class="example-chip" onclick="fill('How much is Statutory Sick Pay per week?')">Statutory Sick Pay rate</button>
+    <button class="example-chip" onclick="fill('What notice must my employer give before making me redundant?')">Redundancy notice</button>
+    <button class="example-chip" onclick="fill('How do I apply for Universal Credit?')">Apply for Universal Credit</button>
+    <button class="example-chip" onclick="fill('How much deposit can a landlord charge?')">Landlord deposit rules</button>
   </div>
 
   <div class="spinner" id="spinner">Searching GOV.UK guidance…</div>
   <div class="error-banner" id="errorBanner"></div>
   <div id="result"></div>
+
+  <details class="how-it-works">
+    <summary>How it works</summary>
+    <div class="body">
+      <div class="pipeline-steps">
+        <span class="step">Your question</span>
+        <span class="step">Hybrid search (BM25 + dense)</span>
+        <span class="step">Cross-encoder reranker</span>
+        <span class="step">Qwen3-235B via Nebius</span>
+        <span class="step">Answer with [n] citations</span>
+      </div>
+      <p>Corpus: 3,313 GOV.UK pages (21,740 chunks). Topics: benefits, employment, housing, transport.</p>
+      <p style="margin-top:8px">Dev-split evaluation (100 questions, LLM-as-judge 0–3 scale):</p>
+      <table>
+        <tr><th>Config</th><th>Faithfulness</th><th>Relevance</th><th>Citation</th><th>Composite</th></tr>
+        <tr><td>dense_400</td><td>1.26</td><td>2.70</td><td>1.36</td><td>1.77</td></tr>
+        <tr><td>hybrid_400</td><td>1.11</td><td>2.70</td><td>1.23</td><td>1.68</td></tr>
+        <tr class="best"><td><strong>hybrid_400_rerank ✓</strong></td><td><strong>1.25</strong></td><td><strong>2.67</strong></td><td><strong>1.42</strong></td><td><strong>1.78</strong></td></tr>
+        <tr><td>hybrid_800</td><td>1.05</td><td>2.80</td><td>1.15</td><td>1.67</td></tr>
+        <tr><td>hybrid_800_rerank</td><td>1.02</td><td>2.76</td><td>1.10</td><td>1.63</td></tr>
+      </table>
+      <p style="margin-top:8px">Test-split (50 questions, one-shot): composite <strong>1.69</strong>.
+      Generator: <a href="https://huggingface.co/Qwen/Qwen3-235B-A22B-Instruct-2507" target="_blank" rel="noopener" style="color:#1d70b8">Qwen3-235B-A22B</a> via Nebius.
+      Judge: DeepSeek-V4.1-Flash (different family — reduces self-preference bias).
+      Source: <a href="https://github.com/HeinHtet-Phyo/citewise" target="_blank" rel="noopener" style="color:#1d70b8">github.com/HeinHtet-Phyo/citewise</a>.</p>
+    </div>
+  </details>
+
 </main>
 
 <script>
@@ -220,6 +349,11 @@
   const resultDiv = document.getElementById("result");
 
   questionInput.addEventListener("keydown", e => { if (e.key === "Enter") ask(); });
+
+  function fill(text) {
+    questionInput.value = text;
+    ask();
+  }
 
   async function ask() {
     const question = questionInput.value.trim();
@@ -237,6 +371,9 @@
         body: JSON.stringify({ question, config_name: "hybrid_400_rerank" }),
       });
 
+      if (res.status === 429) {
+        throw new Error("Rate limit reached (10 requests/minute). Please wait a moment.");
+      }
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: res.statusText }));
         throw new Error(err.detail || "Request failed");
@@ -260,7 +397,7 @@
         <div class="refused-banner">
           <strong>No answer found.</strong>
           ${data.refusal_reason === "low_evidence"
-            ? " The guidance does not contain enough information to answer this question reliably."
+            ? " The guidance does not contain enough information to answer this question reliably. Try rephrasing or check <a href='https://www.gov.uk' target='_blank' rel='noopener'>gov.uk</a> directly."
             : data.refusal_reason === "unsafe"
             ? " This question cannot be answered by this service."
             : " This question is outside the scope of UK government guidance."}
@@ -268,15 +405,21 @@
       return;
     }
 
+    // Linkify [n] citation markers in the answer text.
+    const answerHtml = escHtml(data.answer).replace(
+      /\[(\d+)\]/g,
+      (_, n) => `<a href="#cite-${n}" style="color:#1d70b8;text-decoration:none;font-weight:bold">[${n}]</a>`
+    );
+
     const metaHtml = `
       <div class="meta">
-        <span>⏱ ${data.latency_ms} ms</span>
-        <span>📄 ${data.citations.length} source${data.citations.length !== 1 ? "s" : ""}</span>
-        <span>💰 £${data.cost_gbp.toFixed(5)}</span>
+        <span>&#8987; ${data.latency_ms} ms</span>
+        <span>&#128196; ${data.citations.length} source${data.citations.length !== 1 ? "s" : ""}</span>
+        <span>&#163;${data.cost_gbp.toFixed(5)} generation cost</span>
       </div>`;
 
     const citationsHtml = data.citations.map(c => `
-      <div class="citation">
+      <div class="citation" id="cite-${c.n}">
         <div class="citation-header">
           <span class="citation-n">${c.n}</span>
           <div>
@@ -286,14 +429,14 @@
         </div>
         <div class="citation-snippet">${escHtml(c.snippet)}</div>
         <a class="citation-link" href="${escHtml(c.url)}" target="_blank" rel="noopener">
-          View on GOV.UK ↗
+          View on GOV.UK &#8599;
         </a>
         <div class="citation-updated">Last updated: ${escHtml(c.updated_at)}</div>
       </div>`).join("");
 
     resultDiv.innerHTML = `
       <div class="answer-card">
-        <div class="answer-text">${escHtml(data.answer)}</div>
+        <div class="answer-text">${answerHtml}</div>
         ${metaHtml}
       </div>
       ${data.citations.length > 0 ? `<div class="citations-heading">Sources</div>${citationsHtml}` : ""}`;

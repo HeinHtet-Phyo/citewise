@@ -50,10 +50,10 @@ The detailed_guide count comes from four taxonomy topics: welfare/benefits (88),
 
 | Chunk size | Chunks | Min tokens | Avg tokens | Max tokens | Over limit |
 |------------|--------|-----------|-----------|-----------|-----------|
-| 400 | 48,855 | 8 | 126 | 1,001 | 104 (0.2%) |
-| 800 | 46,990 | 8 | 129 | 1,001 | 36 (0.1%) |
+| 400 | 21,740 | 9 | 282 | 998 | 113 (0.5%) |
+| 800 | 12,311 | 27 | 486 | 998 | 39 (0.3%) |
 
-The low average (126 tokens) reflects GOV.UK's structure: many short sections with focused factual content. The 0.2% over-limit cases are single long paragraphs or tables with no sentence boundaries — they cannot be split further without breaking meaning.
+The 400- and 800-token sizes produce meaningfully different chunks (282 vs 486 avg tokens, ratio 1.72×) thanks to section merging: adjacent sections from the same guide part are greedily merged before splitting. The 0.5% over-limit cases are single very long sections — bullet-heavy tables or long prose blocks — that exceed the limit even as a single section and cannot be split further without breaking meaning.
 
 ## Exclusions and decisions
 

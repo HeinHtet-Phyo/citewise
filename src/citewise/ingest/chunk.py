@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+from dataclasses import dataclass
 from pathlib import Path
 
 import tiktoken
@@ -22,12 +23,15 @@ def _count_tokens(text: str) -> int:
     return len(_TOKENISER.encode(text))
 
 
+def _make_chunk_id(base_path: str, section_slug: str, n: int) -> str:
+    """Create a stable, human-readable chunk ID."""
+    slug = re.sub(r"[^a-z0-9-]", "-", section_slug.lower())[:40].strip("-")
+    return f"{base_path}#{slug}-{n}"
+
+
 def _split_sentences(text: str) -> list[str]:
-    """Split text into sentences, preserving bullet points as atomic units."""
-    # First split on sentence-ending punctuation or newlines (covers bullet lists
-    # and structured content that lacks terminal punctuation).
+    """Split text at sentence boundaries and newlines."""
     parts = re.split(r"(?<=[.!?])\s+|\n+", text)
-    # Rejoin very short fragments with the previous sentence.
     merged: list[str] = []
     for part in parts:
         part = part.strip()
@@ -40,119 +44,174 @@ def _split_sentences(text: str) -> list[str]:
     return merged
 
 
-def _make_chunk_id(base_path: str, section_slug: str, n: int) -> str:
-    """Create a stable, human-readable chunk ID."""
-    slug = re.sub(r"[^a-z0-9-]", "-", section_slug.lower())[:40].strip("-")
-    return f"{base_path}#{slug}-{n}"
+@dataclass
+class _SectionGroup:
+    """A group of adjacent sections merged for chunking."""
+
+    sections: list[Section]
+    body: str  # formatted body text (headings inline)
+    tokens: int  # token count of body alone (without page-title prefix)
+    url: str  # URL of first section
+    first_heading: str | None
 
 
-def chunk_section(
-    section: Section,
+def _format_section(section: Section) -> str:
+    """Format a section as heading + body for inclusion in a merged chunk."""
+    if section.heading:
+        return f"## {section.heading}\n{section.text}"
+    return section.text
+
+
+def _merge_sections(
+    sections: list[Section],
+    max_body_tokens: int,
+) -> list[_SectionGroup]:
+    """
+    Greedily merge adjacent sections into groups that fit within max_body_tokens.
+
+    Rules:
+    - Sections from different guide parts (different URLs) are never merged,
+      so citations always point to the correct page.
+    - Each iteration advances i by at least one, guaranteeing termination.
+    - Overlap between groups is handled by sentence-splitting inside _split_group.
+    """
+    groups: list[_SectionGroup] = []
+    i = 0
+
+    while i < len(sections):
+        anchor_url = sections[i].url
+        buffer: list[Section] = []
+        buffer_tokens = 0
+
+        while i < len(sections):
+            sec = sections[i]
+            sec_text = _format_section(sec)
+            sec_tokens = _count_tokens(sec_text)
+            sep_tokens = 2 if buffer else 0  # "\n\n" between sections
+
+            # Stop at a URL boundary (different guide part).
+            if sec.url != anchor_url:
+                break
+            # Stop if adding this section would overflow (but always take at least one).
+            if buffer and buffer_tokens + sep_tokens + sec_tokens > max_body_tokens:
+                break
+
+            buffer.append(sec)
+            buffer_tokens += sep_tokens + sec_tokens
+            i += 1
+
+        body = "\n\n".join(_format_section(s) for s in buffer)
+        groups.append(
+            _SectionGroup(
+                sections=buffer,
+                body=body,
+                tokens=_count_tokens(body),
+                url=buffer[0].url,
+                first_heading=buffer[0].heading,
+            )
+        )
+
+    return groups
+
+
+def _split_group(
+    group: _SectionGroup,
     page_title: str,
     base_path: str,
     page_format: str,
     updated_at: str,
-    max_tokens: int = 400,
-    overlap_tokens: int = 60,
+    max_tokens: int,
+    overlap_tokens: int,
+    chunk_index_start: int,
 ) -> list[Chunk]:
     """
-    Split one section into overlapping token-bounded chunks.
+    Sentence-split a single _SectionGroup that exceeds max_tokens.
 
-    Each chunk starts with the page title and section heading so it makes
-    sense when retrieved without surrounding context.
+    Used as a fallback when a merged group is still too large.
     """
-    heading = section.heading or ""
-    # Prefix prepended to every chunk from this section.
-    prefix = f"{page_title}\n{heading}\n\n" if heading else f"{page_title}\n\n"
+    slug = re.sub(r"\s+", "-", group.first_heading.lower())[:40] if group.first_heading else "intro"
+    prefix = f"{page_title}\n\n"
     prefix_tokens = _count_tokens(prefix)
     effective_max = max_tokens - prefix_tokens
 
-    sentences = _split_sentences(section.text)
+    sentences = _split_sentences(group.body)
     chunks: list[Chunk] = []
-    current_sentences: list[str] = []
+    current: list[str] = []
     current_tokens = 0
-    section_slug = re.sub(r"\s+", "-", heading.lower())[:40] if heading else "intro"
-    chunk_index = 0
+    idx = chunk_index_start
 
     for sent in sentences:
         sent_tokens = _count_tokens(sent)
-        # If a single sentence exceeds the limit, force-split it.
+
         if sent_tokens > effective_max:
-            # Flush current buffer first.
-            if current_sentences:
-                text = prefix + " ".join(current_sentences)
+            if current:
+                text = prefix + " ".join(current)
                 chunks.append(
                     Chunk(
-                        chunk_id=_make_chunk_id(base_path, section_slug, chunk_index),
-                        url=section.url,
+                        chunk_id=_make_chunk_id(base_path, slug, idx),
+                        url=group.url,
                         title=page_title,
-                        section=heading or None,
+                        section=group.first_heading,
                         text=text,
                         format=page_format,
                         updated_at=updated_at,
                         tokens=_count_tokens(text),
                     )
                 )
-                chunk_index += 1
-                current_sentences = []
-                current_tokens = 0
-            # Emit the long sentence as its own chunk.
+                idx += 1
+                current, current_tokens = [], 0
             text = prefix + sent
             chunks.append(
                 Chunk(
-                    chunk_id=_make_chunk_id(base_path, section_slug, chunk_index),
-                    url=section.url,
+                    chunk_id=_make_chunk_id(base_path, slug, idx),
+                    url=group.url,
                     title=page_title,
-                    section=heading or None,
+                    section=group.first_heading,
                     text=text,
                     format=page_format,
                     updated_at=updated_at,
                     tokens=_count_tokens(text),
                 )
             )
-            chunk_index += 1
+            idx += 1
             continue
 
-        if current_tokens + sent_tokens > effective_max and current_sentences:
-            # Emit the current buffer.
-            text = prefix + " ".join(current_sentences)
+        if current and current_tokens + sent_tokens > effective_max:
+            text = prefix + " ".join(current)
             chunks.append(
                 Chunk(
-                    chunk_id=_make_chunk_id(base_path, section_slug, chunk_index),
-                    url=section.url,
+                    chunk_id=_make_chunk_id(base_path, slug, idx),
+                    url=group.url,
                     title=page_title,
-                    section=heading or None,
+                    section=group.first_heading,
                     text=text,
                     format=page_format,
                     updated_at=updated_at,
                     tokens=_count_tokens(text),
                 )
             )
-            chunk_index += 1
-            # Keep the overlap: retain trailing sentences whose total <= overlap_tokens.
+            idx += 1
             overlap: list[str] = []
             overlap_total = 0
-            for s in reversed(current_sentences):
+            for s in reversed(current):
                 t = _count_tokens(s)
                 if overlap_total + t > overlap_tokens:
                     break
                 overlap.insert(0, s)
                 overlap_total += t
-            current_sentences = overlap
-            current_tokens = overlap_total
+            current, current_tokens = overlap, overlap_total
 
-        current_sentences.append(sent)
+        current.append(sent)
         current_tokens += sent_tokens
 
-    # Emit remaining sentences.
-    if current_sentences:
-        text = prefix + " ".join(current_sentences)
+    if current:
+        text = prefix + " ".join(current)
         chunks.append(
             Chunk(
-                chunk_id=_make_chunk_id(base_path, section_slug, chunk_index),
-                url=section.url,
+                chunk_id=_make_chunk_id(base_path, slug, idx),
+                url=group.url,
                 title=page_title,
-                section=heading or None,
+                section=group.first_heading,
                 text=text,
                 format=page_format,
                 updated_at=updated_at,
@@ -168,20 +227,72 @@ def chunk_page(
     max_tokens: int = 400,
     overlap_tokens: int = 60,
 ) -> list[Chunk]:
-    """Chunk all sections of a CleanPage."""
+    """
+    Chunk a CleanPage by first merging adjacent short sections, then sentence-splitting
+    any groups that still exceed max_tokens.
+
+    Strategy:
+    1. Greedily merge adjacent sections into groups that fit within max_tokens
+       (keeping section headings inline as ## markers).
+    2. Groups that fit → emit directly as one chunk.
+    3. Groups that overflow (single very long section) → sentence-split with overlap.
+
+    This ensures the 400- and 800-token sizes produce chunks that differ meaningfully
+    in size and context density.
+    """
+    if not page.sections:
+        return []
+
+    prefix = f"{page.title}\n\n"
+    prefix_tokens = _count_tokens(prefix)
+    max_body_tokens = max_tokens - prefix_tokens
+
+    groups = _merge_sections(page.sections, max_body_tokens)
+
     all_chunks: list[Chunk] = []
-    for section in page.sections:
-        all_chunks.extend(
-            chunk_section(
-                section=section,
+    slug_counter: dict[str, int] = {}
+
+    for group in groups:
+        slug = (
+            re.sub(r"\s+", "-", group.first_heading.lower())[:40]
+            if group.first_heading
+            else "intro"
+        )
+        idx = slug_counter.get(slug, 0)
+
+        total_tokens = prefix_tokens + group.tokens
+
+        if total_tokens <= max_tokens:
+            # Group fits — emit as a single chunk.
+            text = prefix + group.body
+            all_chunks.append(
+                Chunk(
+                    chunk_id=_make_chunk_id(page.path, slug, idx),
+                    url=group.url,
+                    title=page.title,
+                    section=group.first_heading,
+                    text=text,
+                    format=page.format,
+                    updated_at=page.updated_at,
+                    tokens=_count_tokens(text),
+                )
+            )
+            slug_counter[slug] = idx + 1
+        else:
+            # Group too large — sentence-split.
+            split_chunks = _split_group(
+                group=group,
                 page_title=page.title,
                 base_path=page.path,
                 page_format=page.format,
                 updated_at=page.updated_at,
                 max_tokens=max_tokens,
                 overlap_tokens=overlap_tokens,
+                chunk_index_start=idx,
             )
-        )
+            all_chunks.extend(split_chunks)
+            slug_counter[slug] = idx + len(split_chunks)
+
     return all_chunks
 
 
@@ -208,7 +319,6 @@ def chunk_all(
         for chunk in all_chunks:
             fh.write(chunk.model_dump_json() + "\n")
 
-    # Token statistics.
     tokens = [c.tokens for c in all_chunks]
     avg = sum(tokens) / len(tokens) if tokens else 0
     log.info(

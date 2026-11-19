@@ -15,11 +15,13 @@ RUN pip install --no-cache-dir -e ".[dev]" 2>&1 | tail -3 || pip install --no-ca
 
 # Copy source
 COPY src/ src/
+COPY app.py ./
 
 # Non-root user for security
 RUN useradd -m appuser && chown -R appuser /app
 USER appuser
 
-EXPOSE 8000
+# HF Spaces uses port 7860 by default
+EXPOSE 7860
 
-CMD ["uvicorn", "citewise.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "citewise.api.main:app", "--host", "0.0.0.0", "--port", "7860"]

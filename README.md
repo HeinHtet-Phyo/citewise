@@ -1,3 +1,13 @@
+---
+title: Citewise
+emoji: 📋
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Citewise
 
 **UK government guidance, answered with citations.**

@@ -80,7 +80,7 @@ def test_retrieve_dense_no_reranker(monkeypatch: pytest.MonkeyPatch) -> None:
 
     mock_client = MagicMock()
     mock_client.query_points.return_value = mock_result
-    monkeypatch.setattr("citewise.retrieve._client", lambda: mock_client)
+    monkeypatch.setattr("citewise.retrieve._get_client", lambda: mock_client)
 
     # Mock embeddings
     monkeypatch.setattr(
@@ -108,7 +108,7 @@ def test_retrieve_hybrid_calls_fusion(monkeypatch: pytest.MonkeyPatch) -> None:
 
     mock_client = MagicMock()
     mock_client.query_points.return_value = mock_result
-    monkeypatch.setattr("citewise.retrieve._client", lambda: mock_client)
+    monkeypatch.setattr("citewise.retrieve._get_client", lambda: mock_client)
     monkeypatch.setattr(
         "citewise.retrieve.embed_dense_single", lambda _: [0.1] * 384
     )

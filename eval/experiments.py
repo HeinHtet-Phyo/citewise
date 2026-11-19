@@ -128,14 +128,11 @@ def run_experiments(split: str, config_names: list[str]) -> None:
         # Tune on the highest-composite config
         best_config = max(summary, key=lambda c: summary[c].get("composite_mean", 0.0))
         log.info("Tuning refusal threshold on dev split for best config: %s", best_config)
-        all_judgements = []
-        for config_name in config_names:
-            results_path = RESULTS_DIR / f"{config_name}_{split}.jsonl"
-            all_judgements = score_results_file(results_path)
+        best_judgements = score_results_file(RESULTS_DIR / f"{best_config}_{split}.jsonl")
         best_threshold = tune_threshold(
             best_config,
             RESULTS_DIR / f"{best_config}_{split}.jsonl",
-            all_judgements,
+            best_judgements,
         )
         log.info("Recommended refusal_threshold: %.2f", best_threshold)
         print(f"\n→ Recommended refusal_threshold for {best_config}: {best_threshold:.2f}")

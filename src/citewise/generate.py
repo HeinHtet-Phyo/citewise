@@ -39,7 +39,8 @@ _NEBIUS_PRICING: dict[str, tuple[float, float]] = {
 }
 
 # Qwen3 models emit <think>…</think> blocks in thinking mode; strip them.
-_THINK_RE = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
+# Greedy match handles nested <think> tags (non-greedy stops at the first </think>).
+_THINK_RE = re.compile(r"<think>.*</think>", re.DOTALL | re.IGNORECASE)
 
 
 def _cache_path(cache_dir: str, key: str) -> Path:
@@ -136,9 +137,9 @@ def generate_answer(
         _model_key = config.llm_model.removeprefix("openai/")
         if _model_key in _NEBIUS_PRICING:
             _in, _out = _NEBIUS_PRICING[_model_key]
-            cost_usd = (
-                response.usage.prompt_tokens * _in + (response.usage.completion_tokens or 0) * _out
-            )
+            cost_usd = (response.usage.prompt_tokens or 0) * _in + (
+                response.usage.completion_tokens or 0
+            ) * _out
     cost_gbp = round(cost_usd * _USD_TO_GBP, 6)
 
     log.info("LLM %s: %d ms, $%.6f (£%.6f)", config.llm_model, latency_ms, cost_usd, cost_gbp)

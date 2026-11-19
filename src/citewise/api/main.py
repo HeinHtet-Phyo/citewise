@@ -35,15 +35,30 @@ _RATE_LIMIT = 10
 _RATE_WINDOW = 60.0
 
 
+# Compute once at startup — avoids a subprocess on every health probe.
+def _read_git_sha() -> str:
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"], text=True, stderr=subprocess.DEVNULL
+        ).strip()
+    except Exception:
+        return "unknown"
+
+
+_GIT_SHA: str = _read_git_sha()
+
+
 async def _rate_limit(request: Request) -> None:
     """Raise 429 if the caller exceeds 10 requests per minute."""
     ip = request.client.host if request.client else "unknown"
     now = time()
-    bucket = _rate_buckets[ip]
-    _rate_buckets[ip] = [t for t in bucket if now - t < _RATE_WINDOW]
+    _rate_buckets[ip] = [t for t in _rate_buckets[ip] if now - t < _RATE_WINDOW]
     if len(_rate_buckets[ip]) >= _RATE_LIMIT:
         raise HTTPException(status_code=429, detail="Rate limit: 10 requests/minute. Please wait.")
     _rate_buckets[ip].append(now)
+    # Prune keys whose buckets are now empty to prevent unbounded dict growth.
+    if not _rate_buckets[ip]:
+        del _rate_buckets[ip]
 
 
 app = FastAPI(
@@ -86,16 +101,6 @@ _CONFIGS: dict[str, RagConfig] = {
 _DEFAULT_CONFIG = "hybrid_400_rerank"
 
 
-def _git_sha() -> str:
-    """Return the current HEAD SHA (first 7 chars), or 'unknown'."""
-    try:
-        return subprocess.check_output(
-            ["git", "rev-parse", "--short", "HEAD"], text=True, stderr=subprocess.DEVNULL
-        ).strip()
-    except Exception:
-        return "unknown"
-
-
 class AskRequest(BaseModel):
     """Request body for the /ask endpoint."""
 
@@ -115,7 +120,7 @@ async def health() -> JSONResponse:
             "status": "ok",
             "model": _CONFIGS[_DEFAULT_CONFIG].llm_model,
             "default_config": _DEFAULT_CONFIG,
-            "git_sha": _git_sha(),
+            "git_sha": _GIT_SHA,
         }
     )
 

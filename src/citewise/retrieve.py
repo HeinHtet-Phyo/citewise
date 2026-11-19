@@ -35,6 +35,7 @@ log = logging.getLogger(__name__)
 
 RERANKER_MODEL = "Xenova/ms-marco-MiniLM-L-6-v2"
 _reranker: TextCrossEncoder | None = None
+_qdrant: QdrantClient | None = None
 
 
 def _get_reranker() -> TextCrossEncoder:
@@ -45,16 +46,19 @@ def _get_reranker() -> TextCrossEncoder:
     return _reranker
 
 
+def _get_client() -> QdrantClient:
+    global _qdrant
+    if _qdrant is None:
+        _qdrant = QdrantClient(url=settings.qdrant_url, api_key=settings.qdrant_api_key or None)
+    return _qdrant
+
+
 @dataclass
 class RetrievedChunk:
     """A chunk returned by retrieval, with its relevance score."""
 
     chunk: Chunk
     score: float
-
-
-def _client() -> QdrantClient:
-    return QdrantClient(url=settings.qdrant_url, api_key=settings.qdrant_api_key or None)
 
 
 def _points_to_chunks(points: list[ScoredPoint]) -> list[RetrievedChunk]:
@@ -100,7 +104,7 @@ def retrieve(query: str, config: RagConfig) -> list[RetrievedChunk]:
 
     Returns up to config.top_k_context chunks.
     """
-    client = _client()
+    client = _get_client()
 
     if config.search_mode == "hybrid":
         dense_vec = embed_dense_single(query)

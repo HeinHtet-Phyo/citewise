@@ -52,7 +52,8 @@ def _build_judge_message(question: str, sources: list[str], answer: str) -> str:
 
 def _parse_judge_response(text: str) -> dict[str, int | str]:
     """Extract JSON from judge response, tolerating minor formatting issues."""
-    match = re.search(r"\{.*\}", text, re.DOTALL)
+    # Avoid greedy DOTALL which spans multiple objects; flat judge JSON has no nested braces.
+    match = re.search(r"\{[^{}]+\}", text)
     if not match:
         raise ValueError(f"No JSON object in judge response: {text!r}")
     return json.loads(match.group())
@@ -83,7 +84,12 @@ def judge_answer(
             data = json.loads(cached.read_text(encoding="utf-8"))
             parsed = data.get("text", data)
             if isinstance(parsed, str):
-                parsed = _parse_judge_response(parsed)
+                try:
+                    parsed = _parse_judge_response(parsed)
+                except ValueError:
+                    log.warning("Cached judge response unparseable — will re-call LLM")
+                    cached.unlink(missing_ok=True)
+                    parsed = None
         else:
             parsed = None
     else:

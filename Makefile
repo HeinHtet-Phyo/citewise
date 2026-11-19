@@ -31,10 +31,12 @@ ingest:
 
 index:
 	docker compose up -d qdrant
-	$(PYTHON) -m citewise.index.build
+	$(PYTHON) -m citewise.index.build citewise_400 400
+	$(PYTHON) -m citewise.index.build citewise_800 800
 
 index-cloud:
-	$(PYTHON) -m citewise.index.build --target cloud
+	$(PYTHON) -m citewise.index.build citewise_400 400
+	$(PYTHON) -m citewise.index.build citewise_800 800
 
 eval:
 	$(PYTHON) eval/experiments.py --split dev

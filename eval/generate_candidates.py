@@ -105,9 +105,38 @@ def run(split: str, config_name: str) -> None:
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     output_path = RESULTS_DIR / f"{config_name}_{split}.jsonl"
 
+    errors = 0
     with output_path.open("w", encoding="utf-8") as fh:
         for i, q in enumerate(questions, start=1):
-            answer: Answer = answer_question(q["question"], config)
+            try:
+                answer: Answer = answer_question(q["question"], config)
+            except Exception as exc:
+                log.error(
+                    "[%d/%d] %s — LLM call failed, writing error placeholder: %s",
+                    i,
+                    len(questions),
+                    q["question_id"],
+                    exc,
+                )
+                errors += 1
+                # Write a minimal error row so the question isn't silently skipped.
+                row: dict = {
+                    "question": q["question"],
+                    "question_id": q["question_id"],
+                    "topic": q["topic"],
+                    "answer": f"[generation error: {type(exc).__name__}]",
+                    "citations": [],
+                    "refused": True,
+                    "refusal_reason": "generation_error",
+                    "config_name": config_name,
+                    "latency_ms": 0,
+                    "cost_gbp": 0.0,
+                    "retrieved_chunk_ids": [],
+                    "trace_id": None,
+                }
+                fh.write(json.dumps(row) + "\n")
+                continue
+
             log.info(
                 "[%d/%d] %s — %dms (refused=%s)",
                 i,
@@ -121,7 +150,12 @@ def run(split: str, config_name: str) -> None:
             row["topic"] = q["topic"]
             fh.write(json.dumps(row) + "\n")
 
-    log.info("Wrote %d answers → %s", len(questions), output_path)
+    if errors:
+        log.warning(
+            "Completed with %d/%d generation errors → %s", errors, len(questions), output_path
+        )
+    else:
+        log.info("Wrote %d answers → %s", len(questions), output_path)
 
 
 def main() -> None:

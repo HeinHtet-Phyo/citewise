@@ -70,7 +70,7 @@ class RagConfig:
         use_reranker: bool = True,
         top_k_context: int = 6,
         refusal_threshold: float = 0.0,  # tuned on dev split
-        llm_model: str = "gemini/gemini-2.0-flash",
+        llm_model: str = "gemini/gemini-3.8-flash",
         temperature: float = 0.0,
         max_tokens: int = 1024,
     ) -> None:

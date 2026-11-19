@@ -36,8 +36,8 @@ class Judgement:
     """Scores from the LLM judge for one question-answer pair."""
 
     question_id: str
-    faithfulness: int      # 0–3
-    relevance: int         # 0–3
+    faithfulness: int  # 0–3
+    relevance: int  # 0–3
     citation_quality: int  # 0–3
     rationale: str
     refused: bool
@@ -46,11 +46,7 @@ class Judgement:
 def _build_judge_message(question: str, sources: list[str], answer: str) -> str:
     """Format question, sources, and answer for the judge."""
     numbered = "\n\n".join(f"[{i + 1}] {s}" for i, s in enumerate(sources))
-    return (
-        f"Question: {question}\n\n"
-        f"Sources:\n{numbered}\n\n"
-        f"Answer: {answer}"
-    )
+    return f"Question: {question}\n\nSources:\n{numbered}\n\nAnswer: {answer}"
 
 
 def _parse_judge_response(text: str) -> dict[str, int | str]:

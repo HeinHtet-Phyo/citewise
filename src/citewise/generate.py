@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 
 import litellm
+from litellm.exceptions import RateLimitError, ServiceUnavailableError, Timeout
 
 from citewise.config import RagConfig, settings
 from citewise.retrieve import RetrievedChunk
@@ -23,6 +24,8 @@ _USD_TO_GBP = 0.79
 
 # litellm is chatty at INFO; suppress unless debugging.
 litellm.suppress_debug_info = True
+# Some newer models (e.g. gemini-3.8-flash) don't support all params; drop silently.
+litellm.drop_params = True
 
 
 def _cache_path(cache_dir: str, key: str) -> Path:
@@ -69,13 +72,29 @@ def generate_answer(
             return data["text"], data["cost_gbp"], 0
 
     t0 = time.monotonic()
-    response = litellm.completion(
-        model=config.llm_model,
-        messages=messages,
-        temperature=config.temperature,
-        max_tokens=config.max_tokens,
-        api_key=settings.gemini_api_key or None,
-    )
+    _backoff = 10.0
+    for _attempt in range(3):
+        try:
+            response = litellm.completion(
+                model=config.llm_model,
+                messages=messages,
+                temperature=config.temperature,
+                max_tokens=config.max_tokens,
+                api_key=settings.gemini_api_key or None,
+                timeout=60,
+            )
+            break
+        except (RateLimitError, ServiceUnavailableError, Timeout) as exc:
+            if _attempt == 2:
+                raise
+            log.warning(
+                "Gemini rate-limit/503 (attempt %d/3) — backing off %.0fs: %s",
+                _attempt + 1,
+                _backoff,
+                exc,
+            )
+            time.sleep(_backoff)
+            _backoff = min(_backoff * 2, 20.0)
     latency_ms = int((time.monotonic() - t0) * 1000)
 
     text: str = response.choices[0].message.content or ""

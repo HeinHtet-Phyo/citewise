@@ -49,21 +49,31 @@ def write_answer_csv(rows: list[dict], out_path: Path) -> None:
     with out_path.open("w", newline="", encoding="utf-8") as fh:
         writer = csv.DictWriter(
             fh,
-            fieldnames=["question_id", "topic", "question", "answer", "n_citations",
-                        "latency_ms", "cost_gbp", "human_ok"],
+            fieldnames=[
+                "question_id",
+                "topic",
+                "question",
+                "answer",
+                "n_citations",
+                "latency_ms",
+                "cost_gbp",
+                "human_ok",
+            ],
         )
         writer.writeheader()
         for r in sample:
-            writer.writerow({
-                "question_id": r.get("question_id", ""),
-                "topic": r.get("topic", ""),
-                "question": r["question"],
-                "answer": r["answer"].replace("\n", " "),
-                "n_citations": len(r.get("citations", [])),
-                "latency_ms": r.get("latency_ms", 0),
-                "cost_gbp": r.get("cost_gbp", 0.0),
-                "human_ok": "",  # reviewer fills in: Y / N / ?
-            })
+            writer.writerow(
+                {
+                    "question_id": r.get("question_id", ""),
+                    "topic": r.get("topic", ""),
+                    "question": r["question"],
+                    "answer": r["answer"].replace("\n", " "),
+                    "n_citations": len(r.get("citations", [])),
+                    "latency_ms": r.get("latency_ms", 0),
+                    "cost_gbp": r.get("cost_gbp", 0.0),
+                    "human_ok": "",  # reviewer fills in: Y / N / ?
+                }
+            )
     print(f"Wrote {len(sample)} rows → {out_path}")
 
 
@@ -72,17 +82,19 @@ def write_citation_csv(rows: list[dict], out_path: Path) -> None:
     all_citations = []
     for r in rows:
         for c in r.get("citations", []):
-            all_citations.append({
-                "question_id": r.get("question_id", ""),
-                "question": r["question"],
-                "citation_n": c["n"],
-                "title": c["title"],
-                "section": c.get("section", ""),
-                "url": c["url"],
-                "snippet": c["snippet"],
-                "updated_at": c["updated_at"],
-                "human_relevant": "",  # reviewer fills in: Y / N / ?
-            })
+            all_citations.append(
+                {
+                    "question_id": r.get("question_id", ""),
+                    "question": r["question"],
+                    "citation_n": c["n"],
+                    "title": c["title"],
+                    "section": c.get("section", ""),
+                    "url": c["url"],
+                    "snippet": c["snippet"],
+                    "updated_at": c["updated_at"],
+                    "human_relevant": "",  # reviewer fills in: Y / N / ?
+                }
+            )
 
     sample = random.sample(all_citations, min(30, len(all_citations)))
     sample.sort(key=lambda c: (c["question_id"], c["citation_n"]))
@@ -90,8 +102,17 @@ def write_citation_csv(rows: list[dict], out_path: Path) -> None:
     with out_path.open("w", newline="", encoding="utf-8") as fh:
         writer = csv.DictWriter(
             fh,
-            fieldnames=["question_id", "question", "citation_n", "title", "section",
-                        "url", "snippet", "updated_at", "human_relevant"],
+            fieldnames=[
+                "question_id",
+                "question",
+                "citation_n",
+                "title",
+                "section",
+                "url",
+                "snippet",
+                "updated_at",
+                "human_relevant",
+            ],
         )
         writer.writeheader()
         for c in sample:

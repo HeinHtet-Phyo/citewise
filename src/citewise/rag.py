@@ -79,9 +79,7 @@ def answer_question(question: str, config: RagConfig) -> Answer:
     safe, refusal_reason = check_input(question)
     if not safe:
         log.info("Input refused (%s): %.60s", refusal_reason, question)
-        return _refused_answer(
-            question, refusal_reason or "unsafe", config, 0, trace_id
-        )
+        return _refused_answer(question, refusal_reason or "unsafe", config, 0, trace_id)
 
     # 2. Retrieve
     chunks = retrieve(question, config)

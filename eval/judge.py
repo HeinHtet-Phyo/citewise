@@ -1,7 +1,7 @@
 """LLM-as-judge: score RAG answers on faithfulness, relevance, and citation quality.
 
-The judge uses a Nebius-hosted Llama model (different family from the Gemini generator)
-to avoid self-preference bias. Applies the same file-based LLM cache used by the RAG
+The judge uses DeepSeek-V4.1-Flash (different family from the Qwen3 generator) to
+avoid self-preference bias. Applies the same file-based LLM cache used by the RAG
 pipeline — re-scoring the same answer costs nothing after the first run.
 """
 
@@ -26,8 +26,8 @@ log = logging.getLogger(__name__)
 _PROMPTS_DIR = Path(__file__).parent.parent / "src" / "citewise" / "prompts"
 _JUDGE_SYSTEM = (_PROMPTS_DIR / "judge_system.txt").read_text(encoding="utf-8").strip()
 
-# Nebius-hosted Llama — different family from the Gemini generator to avoid self-preference bias.
-_JUDGE_MODEL = "openai/meta-llama/Meta-Llama-3.1-70B-Instruct"
+# DeepSeek-V4.1-Flash — different family from the Qwen3 generator to avoid self-preference bias.
+_JUDGE_MODEL = "openai/deepseek-ai/DeepSeek-V4.1-Flash-1017"
 litellm.suppress_debug_info = True
 
 

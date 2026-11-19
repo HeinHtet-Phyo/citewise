@@ -78,27 +78,55 @@ Look up the content ID for each topic via the Content API (`/api/content/<path>`
 
 ---
 
-## ADR-004 — Gemini 2.0 Flash for generation
+## ADR-004 — Qwen3-235B-A22B for generation (Nebius)
 
 **Date:** 19 November 2026  
 **Status:** Implemented
 
 ### Context
 
-The project budget is Gemini free-tier only. We need a model that:
+The original plan used Gemini 2.0 Flash (free tier). By November 2026 the model was
+deprecated and its replacement (`gemini-3.8-flash`) is limited to **20 requests per day**
+on the free tier — insufficient for a 500-question eval run.
+
+We need a model that:
 1. Follows precise citation-format instructions (uses `[n]` markers reliably)
-2. Has a long enough context window for 6 × 400-token chunks + system prompt (~3,000 tokens input)
-3. Is fast enough for interactive use
+2. Has a long enough context window for 6 × 400-token chunks + system prompt (~3,000 tokens)
+3. Is affordable within the $20 Nebius hackathon credit budget
 
 ### Decision
 
-Use `gemini/gemini-2.0-flash` via LiteLLM. Temperature = 0 for reproducible, factual answers.
-Nebius models (Llama-3 variants) are reserved for a future cost/quality comparison on the eval set.
+Use `Qwen/Qwen3-235B-A22B-Instruct-2507` via the Nebius Token Factory API (OpenAI-compatible),
+routed through LiteLLM with `base_url=https://api.tokenfactory.nebius.com/v1`.
+
+Qwen3-235B-A22B is a Mixture-of-Experts model: 235B total parameters, 22B active per forward
+pass. This gives near-frontier quality at a cost comparable to a dense 22B model.
+
+Temperature = 0 for reproducible, factual answers. `enable_thinking=False` is passed in
+`extra_body` to suppress Qwen3's extended-reasoning mode; `<think>` blocks are also stripped
+from the output as a defensive fallback.
+
+**Estimated cost per eval run:**
+- 500 dev generation calls × avg 3,500 tokens = ~$0.54
+- 50 test generation calls × avg 3,500 tokens = ~$0.054
+- Judge calls (DeepSeek-V4.1-Flash) = ~$0.21
+- **Total: ~$0.80 per full run**
+
+Pricing source: Nebius Token Factory, November 2026 — $0.20/M input, $0.60/M output.
+LiteLLM does not have Nebius rates built in; a manual fallback in `generate.py` computes
+cost from `response.usage` token counts.
 
 ### Trade-offs
 
-- Free tier rate limits may cause retries; backed off with tenacity.
-- The file-based LLM cache (keyed on model + full prompt SHA-256) means the same question costs £0 on subsequent runs during development.
+- Self-hosted/third-party model: no Google data-use concerns, but requires a valid API key.
+- Nebius free-tier hackathon credit ($120) comfortably covers the full eval suite.
+- The file-based LLM cache (SHA-256 of model + prompt) means re-runs cost nothing once cached.
+
+### Alternatives considered
+
+- **Gemini free tier:** deprecated models, 20 RPD hard limit — cannot run a 500-question eval.
+- **Qwen3-30B-A3B (3B active):** cheaper but weaker instruction-following on citation format.
+- **Llama-3.1-70B:** not available on Nebius Token Factory as of November 2026.
 
 ---
 
@@ -114,21 +142,36 @@ For a RAG system over factual government guidance, three dimensions matter:
 - **Relevance:** does the answer address the question?
 - **Citation quality:** are the `[n]` markers correctly placed?
 
-We have no gold-standard reference answers for 150 questions, so we cannot use exact-match or ROUGE metrics.
+We have no gold-standard reference answers for 150 questions, so we cannot use exact-match
+or ROUGE metrics.
 
 ### Decision
 
-Use Gemini 2.0 Flash as an LLM judge (`eval/judge.py`) with a rubric that scores each dimension 0–3. The judge prompt instructs the model to output JSON only, which is parsed and stored.
+Use `deepseek-ai/DeepSeek-V4.1-Flash-1017` (Nebius) as the LLM judge, scoring each dimension
+0–3. DeepSeek is a **different model family** from the Qwen3 generator, reducing self-preference
+bias. The judge prompt instructs the model to output JSON only.
 
-The judge re-uses the same LLM cache as the pipeline — repeated scoring of the same question costs nothing.
+The judge re-uses the same LLM cache as the pipeline — repeated scoring of the same question
+costs nothing.
 
-**Dev/test split is sacred:** threshold and config selection are based only on dev-split scores; test-split scores are run once at the end for the final reported numbers.
+**Dev/test split is sacred:** threshold and config selection are based only on dev-split
+scores; test-split scores are run once at the end for the final reported numbers.
+
+### Limitation
+
+Using an LLM judge from the same provider (Nebius) as the generator introduces a potential
+shared-infrastructure bias, but the different model family (DeepSeek vs Qwen) is the
+meaningful independence property for avoiding self-preference. The eval measures *relative*
+differences between retrieval configs with the same generator, so within-provider effects
+cancel out across configs.
 
 ### Alternatives considered
 
+- **Gemini as judge:** deprecated/quota-exhausted; cannot support 750 judgements per run.
 - **Human annotation:** More reliable but impractical for 150 × 5 configs = 750 evaluations.
-- **RAGAS framework:** Adds complexity and ties us to its scoring logic; a custom judge is more transparent and interview-explainable.
-- **Retrieval MRR/NDCG:** Would require labelled relevance judgements per question, which we don't have.
+- **RAGAS framework:** Adds complexity and ties us to its scoring logic; a custom judge is
+  more transparent and interview-explainable.
+- **Retrieval MRR/NDCG:** Would require labelled relevance judgements per question.
 
 ---
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
 import time
 from pathlib import Path
 
@@ -24,8 +25,21 @@ _USD_TO_GBP = 0.79
 
 # litellm is chatty at INFO; suppress unless debugging.
 litellm.suppress_debug_info = True
-# Some newer models (e.g. gemini-3.8-flash) don't support all params; drop silently.
+# Some newer models don't support all params (e.g. temperature); drop silently.
 litellm.drop_params = True
+
+# Manual pricing for Nebius models (USD per token).
+# LiteLLM does not have these rates in its built-in table.
+# Source: Nebius Token Factory pricing page, November 2026.
+_NEBIUS_PRICING: dict[str, tuple[float, float]] = {
+    "Qwen/Qwen3-235B-A22B-Instruct-2507": (0.20e-6, 0.60e-6),
+    "Qwen/Qwen3-30B-A3B-Instruct-2507": (0.07e-6, 0.28e-6),
+    "deepseek-ai/DeepSeek-V4.1-Flash-1017": (0.14e-6, 0.28e-6),
+    "deepseek-ai/DeepSeek-V4-Pro-0813": (1.32e-6, 3.96e-6),
+}
+
+# Qwen3 models emit <think>…</think> blocks in thinking mode; strip them.
+_THINK_RE = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
 
 
 def _cache_path(cache_dir: str, key: str) -> Path:
@@ -76,6 +90,11 @@ def generate_answer(
     _api_key = settings.nebius_api_key if _is_nebius else (settings.gemini_api_key or None)
     _base_url = settings.nebius_base_url if _is_nebius else None
 
+    # Disable Qwen3 extended-thinking mode so the output is clean answer text.
+    _extra_body: dict[str, object] = {}
+    if _is_nebius and "Qwen3" in config.llm_model:
+        _extra_body["enable_thinking"] = False
+
     t0 = time.monotonic()
     _backoff = 10.0
     for _attempt in range(3):
@@ -88,6 +107,7 @@ def generate_answer(
                 api_key=_api_key or None,
                 base_url=_base_url or None,
                 timeout=120,
+                extra_body=_extra_body or None,
             )
             break
         except (RateLimitError, ServiceUnavailableError, Timeout) as exc:
@@ -103,12 +123,22 @@ def generate_answer(
             _backoff = min(_backoff * 2, 20.0)
     latency_ms = int((time.monotonic() - t0) * 1000)
 
-    text: str = response.choices[0].message.content or ""
+    raw_text: str = response.choices[0].message.content or ""
+    # Strip any residual <think>…</think> blocks if thinking mode wasn't fully disabled.
+    text = _THINK_RE.sub("", raw_text).strip()
 
     try:
         cost_usd: float = litellm.completion_cost(completion_response=response)
     except Exception:
         cost_usd = 0.0
+    # Fallback: LiteLLM doesn't have Nebius pricing; compute from manual rates.
+    if cost_usd == 0.0 and _is_nebius and response.usage:
+        _model_key = config.llm_model.removeprefix("openai/")
+        if _model_key in _NEBIUS_PRICING:
+            _in, _out = _NEBIUS_PRICING[_model_key]
+            cost_usd = (
+                response.usage.prompt_tokens * _in + (response.usage.completion_tokens or 0) * _out
+            )
     cost_gbp = round(cost_usd * _USD_TO_GBP, 6)
 
     log.info("LLM %s: %d ms, $%.6f (£%.6f)", config.llm_model, latency_ms, cost_usd, cost_gbp)

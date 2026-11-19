@@ -70,7 +70,7 @@ class RagConfig:
         use_reranker: bool = True,
         top_k_context: int = 6,
         refusal_threshold: float = 0.0,  # tuned on dev split
-        llm_model: str = "openai/meta-llama/Meta-Llama-3.1-70B-Instruct",
+        llm_model: str = "openai/Qwen/Qwen3-235B-A22B-Instruct-2507",
         temperature: float = 0.0,
         max_tokens: int = 1024,
     ) -> None:

@@ -1,0 +1,112 @@
+{
+  "config": "hybrid_400_rerank",
+  "best_threshold": 0.3,
+  "best_composite": 1.635,
+  "sweep": {
+    "0.0": {
+      "mean_composite": 1.633,
+      "n_answered": 98,
+      "n_refused": 2
+    },
+    "0.05": {
+      "mean_composite": 1.633,
+      "n_answered": 98,
+      "n_refused": 2
+    },
+    "0.1": {
+      "mean_composite": 1.633,
+      "n_answered": 98,
+      "n_refused": 2
+    },
+    "0.15": {
+      "mean_composite": 1.633,
+      "n_answered": 98,
+      "n_refused": 2
+    },
+    "0.2": {
+      "mean_composite": 1.633,
+      "n_answered": 98,
+      "n_refused": 2
+    },
+    "0.25": {
+      "mean_composite": 1.633,
+      "n_answered": 98,
+      "n_refused": 2
+    },
+    "0.3": {
+      "mean_composite": 1.635,
+      "n_answered": 96,
+      "n_refused": 4
+    },
+    "0.35": {
+      "mean_composite": 1.635,
+      "n_answered": 96,
+      "n_refused": 4
+    },
+    "0.4": {
+      "mean_composite": 1.635,
+      "n_answered": 96,
+      "n_refused": 4
+    },
+    "0.45": {
+      "mean_composite": 1.635,
+      "n_answered": 96,
+      "n_refused": 4
+    },
+    "0.5": {
+      "mean_composite": 1.635,
+      "n_answered": 96,
+      "n_refused": 4
+    },
+    "0.55": {
+      "mean_composite": 1.635,
+      "n_answered": 96,
+      "n_refused": 4
+    },
+    "0.6": {
+      "mean_composite": 1.635,
+      "n_answered": 96,
+      "n_refused": 4
+    },
+    "0.65": {
+      "mean_composite": 1.635,
+      "n_answered": 96,
+      "n_refused": 4
+    },
+    "0.7": {
+      "mean_composite": 1.635,
+      "n_answered": 96,
+      "n_refused": 4
+    },
+    "0.75": {
+      "mean_composite": 1.635,
+      "n_answered": 96,
+      "n_refused": 4
+    },
+    "0.8": {
+      "mean_composite": 1.635,
+      "n_answered": 96,
+      "n_refused": 4
+    },
+    "0.85": {
+      "mean_composite": 1.635,
+      "n_answered": 96,
+      "n_refused": 4
+    },
+    "0.9": {
+      "mean_composite": 1.635,
+      "n_answered": 96,
+      "n_refused": 4
+    },
+    "0.95": {
+      "mean_composite": 1.635,
+      "n_answered": 96,
+      "n_refused": 4
+    },
+    "1.0": {
+      "mean_composite": 1.635,
+      "n_answered": 96,
+      "n_refused": 4
+    }
+  }
+}

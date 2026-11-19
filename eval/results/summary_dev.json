@@ -1,0 +1,52 @@
+{
+  "dense_400": {
+    "n": 100,
+    "faithfulness_mean": 1.26,
+    "relevance_mean": 2.7,
+    "citation_quality_mean": 1.36,
+    "refusal_rate": 0.09,
+    "composite_mean": 1.773,
+    "mean_latency_ms": 1514.2,
+    "total_cost_gbp": 0.0371
+  },
+  "hybrid_400": {
+    "n": 100,
+    "faithfulness_mean": 1.11,
+    "relevance_mean": 2.7,
+    "citation_quality_mean": 1.23,
+    "refusal_rate": 0.06,
+    "composite_mean": 1.68,
+    "mean_latency_ms": 1279.0,
+    "total_cost_gbp": 0.0387
+  },
+  "hybrid_400_rerank": {
+    "n": 100,
+    "faithfulness_mean": 1.25,
+    "relevance_mean": 2.67,
+    "citation_quality_mean": 1.42,
+    "refusal_rate": 0.1,
+    "composite_mean": 1.78,
+    "mean_latency_ms": 1719.2,
+    "total_cost_gbp": 0.0363
+  },
+  "hybrid_800": {
+    "n": 100,
+    "faithfulness_mean": 1.05,
+    "relevance_mean": 2.8,
+    "citation_quality_mean": 1.15,
+    "refusal_rate": 0.04,
+    "composite_mean": 1.667,
+    "mean_latency_ms": 2460.7,
+    "total_cost_gbp": 0.0566
+  },
+  "hybrid_800_rerank": {
+    "n": 100,
+    "faithfulness_mean": 1.02,
+    "relevance_mean": 2.76,
+    "citation_quality_mean": 1.1,
+    "refusal_rate": 0.04,
+    "composite_mean": 1.627,
+    "mean_latency_ms": 4587.4,
+    "total_cost_gbp": 0.0523
+  }
+}

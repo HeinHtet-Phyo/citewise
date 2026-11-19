@@ -65,19 +65,24 @@ LLM-as-judge scores are 0–3 for faithfulness, relevance, and citation quality.
 
 **Dev split (100 questions, 5 configs):**
 
-| Config | Faithfulness | Relevance | Citation | Composite | Refusal |
-|--------|-------------|-----------|----------|-----------|---------|
-| dense_400 | [TBC] | [TBC] | [TBC] | [TBC] | [TBC] |
-| hybrid_400 | [TBC] | [TBC] | [TBC] | [TBC] | [TBC] |
-| hybrid_400_rerank | [TBC] | [TBC] | [TBC] | [TBC] | [TBC] |
-| hybrid_800 | [TBC] | [TBC] | [TBC] | [TBC] | [TBC] |
-| hybrid_800_rerank | [TBC] | [TBC] | [TBC] | [TBC] | [TBC] |
+Scores are 0–3 per dimension. Composite is the unweighted mean.
 
-**Test split (50 questions, best config):**
+| Config | Faithfulness | Relevance | Citation | Composite | Refusal% | Latency |
+|--------|-------------|-----------|----------|-----------|----------|---------|
+| dense_400 | 1.26 | 2.70 | 1.36 | 1.77 | 9% | 1514 ms |
+| hybrid_400 | 1.11 | 2.70 | 1.23 | 1.68 | 6% | 1279 ms |
+| **hybrid_400_rerank** | **1.25** | **2.67** | **1.42** | **1.78** | **10%** | **1719 ms** |
+| hybrid_800 | 1.05 | 2.80 | 1.15 | 1.67 | 4% | 2461 ms |
+| hybrid_800_rerank | 1.02 | 2.76 | 1.10 | 1.63 | 4% | 4587 ms |
 
-| Config | Faithfulness | Relevance | Citation | Composite | Refusal |
-|--------|-------------|-----------|----------|-----------|---------|
-| [TBC] | [TBC] | [TBC] | [TBC] | [TBC] | [TBC] |
+**Test split (50 questions, best config — one-shot run, not used for tuning):**
+
+| Config | Faithfulness | Relevance | Citation | Composite | Refusal% | Latency | Cost |
+|--------|-------------|-----------|----------|-----------|----------|---------|------|
+| hybrid_400_rerank | 1.18 | 2.58 | 1.30 | 1.69 | 14% | 3585 ms | £0.017 |
+
+Tuned refusal threshold (dev-only): **0.30** (see `eval/results/threshold_hybrid_400_rerank.json`).
+Full failure analysis in [`docs/failure_analysis.md`](docs/failure_analysis.md).
 
 ---
 

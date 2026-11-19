@@ -1,145 +1,208 @@
 # Failure analysis
 
-_Analysis of failure modes observed in the dev-split eval run. Updated after eval results are available._
+Analysis of failure modes observed in `hybrid_400_rerank` dev-split results (100 questions).
+A "failure" is any answer scoring < 2 on any judge dimension, plus LLM-initiated refusals
+on questions the corpus can answer.
 
 ## Methodology
 
-Failures are drawn from `eval/results/hybrid_400_rerank_dev.jsonl` — the best-performing config on the dev split. A "failure" is defined as any answer that scores < 2 on any judge dimension, plus all refused answers where the question was answerable.
+- **Config:** `hybrid_400_rerank` — hybrid BM25 + dense search, cross-encoder reranker,
+  400-token chunks, 6 chunks in context
+- **Judge:** DeepSeek-V4.1-Flash, scoring faithfulness / relevance / citation quality 0–3
+- **Failure threshold:** composite score < 2.0 OR refused with reason `low_evidence`
+- **Data source:** `eval/results/hybrid_400_rerank_dev.jsonl`
 
-Each case is annotated with:
-- **Root cause** — what went wrong in the pipeline
-- **Stage** — where the failure originates (retrieval / chunking / generation / guardrails)
-- **Fix direction** — what change would address it
+### Failure distribution (100 dev questions)
 
----
-
-## Cases
-
-_[TBC — will be populated after eval run completes. The structure below shows the intended format.]_
-
-### Case 1 — Retrieval miss on government terminology
-
-**Question:** [TBC]  
-**Expected:** [TBC]  
-**Actual answer:** [TBC]  
-**Judge scores:** Faithfulness [TBC] | Relevance [TBC] | Citation [TBC]
-
-**Root cause:** The query uses everyday language ("sick pay") while the GOV.UK page uses the full legal term ("Statutory Sick Pay"). BM25 misses the match; dense retrieval finds a semantically close but incorrect page.
-
-**Stage:** Retrieval  
-**Fix direction:** Query expansion or synonym injection before retrieval.
+| Failure type | Count | % |
+|---|---|---|
+| Parametric leakage (faith=0, rel≥2) | 64 | 64% |
+| LLM over-refusal on answerable question | 10 | 10% |
+| Retrieval mismatch (faith≤1, rel≤1) | 2 | 2% |
+| Passing answers (composite ≥ 2.0) | 24 | 24% |
 
 ---
 
-### Case 2 — Cross-part merge confusion
+## Pattern A — Parametric leakage (64 cases)
 
-**Question:** [TBC]  
-**Expected:** [TBC]  
-**Actual answer:** [TBC]  
-**Judge scores:** Faithfulness [TBC] | Relevance [TBC] | Citation [TBC]
-
-**Root cause:** A multi-part guide has the eligibility criteria in one part and the rates in another. The reranker selects the rates chunk; the answer misses the eligibility question entirely.
-
-**Stage:** Retrieval (top-k too small)  
-**Fix direction:** Increase `top_k_context` from 6 to 8 for multi-answer questions.
+The dominant failure. Qwen3 retrieves the correct GOV.UK page (relevance=3) but the
+specific numeric or policy detail is in a different section or chunk. The model answers
+from training-data knowledge, cites a retrieved chunk, and receives faithfulness=0 because
+the cited snippet does not contain the stated figure.
 
 ---
 
-### Case 3 — Hallucinated figure
+### Case 1 — UC standard allowance rate not in retrieved chunk
 
-**Question:** [TBC]  
-**Expected:** [TBC]  
-**Actual answer:** [TBC]  
-**Judge scores:** Faithfulness [TBC] | Relevance [TBC] | Citation [TBC]
+**Question:** What is the Universal Credit standard allowance for a single person over 25?  
+**Actual answer:** "The Universal Credit standard allowance for a single person over 25 is £424.90 per month [1]."  
+**Judge scores:** Faithfulness 0 | Relevance 3 | Citation 0  
+**Judge rationale:** "The answer gives a specific monetary amount not supported by any provided source, and the sole citation [1] does not contain that figure."
 
-**Root cause:** The retrieved chunk contains a table with multiple weekly rates. The LLM selects the wrong row and states an incorrect figure with a citation that does exist — but to the wrong part of the table.
+**Retrieved chunk [1] snippet:**
+> "Universal Credit — What you'll get: Universal Credit is paid monthly. How much you get depends on: your standard allowance; an…"
 
-**Stage:** Generation  
-**Fix direction:** Table-aware chunking that includes row headers with every cell value.
+**Root cause:** The chunk retrieved is the *introduction* of the "What you'll get" page. The actual allowance table (listing £344.00 / £424.90 by age and household) is in a later section of the same page that was not included in the top-6 chunks.
 
----
-
-### Case 4 — Stale guidance cited
-
-**Question:** [TBC]  
-**Expected:** [TBC]  
-**Actual answer:** [TBC]  
-**Judge scores:** Faithfulness [TBC] | Relevance [TBC] | Citation [TBC]
-
-**Root cause:** The index was built on a corpus snapshot; the GOV.UK page has since been updated. The answer cites the old figure.
-
-**Stage:** Data freshness  
-**Fix direction:** The incremental refresh pipeline (`refresh.py`) addresses this; run `make ingest` monthly.
+**Stage:** Retrieval — the relevant fact is on the correct page but in an un-retrieved section.  
+**Fix direction:** Parent-child chunking: retrieve the fact-level chunk but include the surrounding table as context, or increase `top_k_context` from 6 to 10.
 
 ---
 
-### Case 5 — Low evidence refusal on answerable question
+### Case 2 — UC taper rate figure not in any retrieved chunk
 
-**Question:** [TBC]  
-**Expected:** An answer exists in the corpus  
-**Actual answer:** Refused with `low_evidence`  
-**Judge scores:** N/A (refused)
+**Question:** How does the Universal Credit taper rate work?  
+**Actual answer:** "…for every £1 a claimant earns, their Universal Credit payment is reduced by 55p [1]."  
+**Judge scores:** Faithfulness 0 | Relevance 3 | Citation 0  
+**Judge rationale:** "The answer correctly explains the taper rate concept but all factual claims are unsupported by the provided sources."
 
-**Root cause:** The question uses a less common phrasing that scores below the refusal threshold, even though relevant chunks exist.
+**Retrieved chunk [1] snippet:**
+> "Universal Credit and employers: Universal Credit is a single monthly payment for people…"
 
-**Stage:** Guardrails (refusal threshold)  
-**Fix direction:** Tune threshold lower, or add query rewriting before retrieval.
+**Root cause:** The hybrid query matched employer-focused pages rather than the claimant-facing "if you're working" section that contains the taper rate. The 55p figure comes from Qwen3's training knowledge, not any retrieved chunk.
 
----
-
-### Case 6 — Citation placed on wrong sentence
-
-**Question:** [TBC]  
-**Expected:** Citation [1] on eligibility claim  
-**Actual answer:** Citation [1] placed on a general introductory sentence  
-**Judge scores:** Faithfulness [TBC] | Relevance [TBC] | Citation [TBC]
-
-**Root cause:** The LLM places the citation on the sentence immediately before the specific claim rather than on the claim itself.
-
-**Stage:** Generation  
-**Fix direction:** Add an explicit instruction in the system prompt: "Place the citation [n] immediately after the specific claim it supports, not at the end of the paragraph."
+**Stage:** Retrieval — query semantics matched employer pages; the taper rate is explained on a different section of the UC guidance.  
+**Fix direction:** Query rewriting or expansion to target the correct GOV.UK section more precisely.
 
 ---
 
-### Case 7 — Out-of-scope question answered (should refuse)
+### Case 3 — Statutory redundancy weekly pay cap not in retrieved chunk
 
-**Question:** [TBC]  
-**Expected:** Refused (topic not in corpus)  
-**Actual answer:** A plausible but unsupported answer  
-**Judge scores:** Faithfulness 0 | Relevance [TBC] | Citation [TBC]
+**Question:** What is the maximum amount of a week's pay for statutory redundancy calculations?  
+**Actual answer:** "The maximum amount of a week's pay for statutory redundancy calculations is £751 [2]. This applies to employees made redundant on or after 6 April 2026 [3]."  
+**Judge scores:** Faithfulness 0 | Relevance 3 | Citation 0  
+**Judge rationale:** "The answer states a specific maximum of £751 and an effective date of 6 April 2026, but neither claim is supported by the provided sources."
 
-**Root cause:** The question is loosely related to a corpus topic. BM25 returns chunks containing partial keyword matches; the LLM synthesises an answer from weakly related guidance.
+**Retrieved chunk [2] snippet:**
+> "Making staff redundant — Redundancy pay: Employees you make redundant might be entitled to redund…"
 
-**Stage:** Retrieval + guardrails  
-**Fix direction:** Tune refusal threshold upward; consider a topic-classification pre-filter.
+**Root cause:** The cap figures for statutory redundancy pay are published in a dedicated table on GOV.UK. The retrieved chunks contain the section introductions ("you might be entitled to…") but not the numerical table rows (the cap was £643 in 2024, £719 in 2025, £751 in 2026). The model cites a chunk that links to but does not contain the figure.
+
+**Stage:** Retrieval (table content not surfaced by chunk boundaries).  
+**Fix direction:** Table-aware chunking that includes row headers with every cell; or add a post-processing step to include numeric rows explicitly.
 
 ---
 
-### Case 8 — Verbatim extraction instead of synthesis
+### Case 4 — JSA entitlement duration not in retrieved chunk
 
-**Question:** [TBC]  
-**Expected:** A synthesised explanation across multiple sources  
-**Actual answer:** A direct copy of a single source chunk with minimal rewording  
-**Judge scores:** Faithfulness [TBC] | Relevance 1 | Citation [TBC]
+**Question:** How long can I claim contribution-based Jobseeker's Allowance?  
+**Actual answer:** "You can claim New Style Jobseeker's Allowance…for up to 182 days [1]. After this period, your work coach will discuss your options with you [1]."  
+**Judge scores:** Faithfulness 0 | Relevance 3 | Citation 0  
+**Judge rationale:** "The 182-day limit and work coach discussion are not supported by the cited source [1] or any provided passage."
 
-**Root cause:** The question requires combining information from two separate guide parts. Only one part scores above the reranker threshold, so the LLM only sees one chunk.
+**Retrieved chunk [1] snippet:**
+> "New Style Jobseeker's Allowance — Overview: If you're unemployed or work less than 16…"
 
-**Stage:** Retrieval  
-**Fix direction:** Diversity-aware retrieval: ensure at least one chunk per distinct guide part is included.
+**Root cause:** The overview chunk introduces JSA without stating the duration. The "How long you can claim" detail (182 days / 26 weeks) is a separate sub-section not included in the top-6 results. Qwen3 knows this figure from training data and reports it with a citation to the overview page.
+
+**Stage:** Retrieval — sub-section with the specific duration was not ranked in the top 6.  
+**Fix direction:** Increase `top_k_context`; or index section headings as metadata for filtering.
+
+---
+
+## Pattern B — LLM over-refusal (10 cases)
+
+Qwen3 responds with "I cannot find sufficient information in the guidance…" even though
+6 relevant chunks were retrieved. The evidence guardrail (`refusal_threshold = 0.0`) did
+not trigger; the LLM itself decided the evidence was insufficient.
+
+---
+
+### Case 5 — JSA part-time work: LLM refuses an answerable question
+
+**Question:** Can I get Jobseeker's Allowance while doing part-time work?  
+**Actual answer:** "I cannot find sufficient information in the guidance to answer this question."  
+**Judge scores:** Faithfulness 3 | Relevance 1 | Citation 3  
+(Faithfulness = 3 because the refusal made no false claims; relevance = 1 because the question was not addressed.)
+
+**Root cause:** The retrieved chunks cover JSA eligibility and the application process. The specific "less than 16 hours" rule is mentioned in the overview ("work less than 16 hours a week on average") but Qwen3's system prompt instructs it to only answer from "the sources provided", and the overview chunk stops before giving the full rule. The model treats the truncated snippet as insufficient and refuses.
+
+**Stage:** Generation — the model is overly cautious when chunks are truncated to 300-character snippets.  
+**Fix direction:** Increase citation snippet length from 300 to 500 characters; or modify the system prompt to allow synthesis across multiple partial snippets.
+
+---
+
+### Case 6 — Shared Parental Leave: LLM refuses despite relevant chunks
+
+**Question:** What is Statutory Shared Parental Leave?  
+**Actual answer (refused):** `low_evidence`  
+**Chunks retrieved:** 6
+
+**Root cause:** Shared Parental Leave is covered in the GOV.UK corpus, but it is a complex topic spread across multiple pages. The retrieved chunks each cover a different aspect (eligibility, curtailment, pay). No single chunk gives a concise definition, so the model — instructed to give evidence-grounded answers — declines to synthesise.
+
+**Stage:** Generation / prompting — the system prompt does not encourage multi-chunk synthesis strongly enough.  
+**Fix direction:** Add a prompt instruction: "If the sources collectively answer the question (even if no single source is complete), synthesise an answer across all sources."
+
+---
+
+## Pattern C — Retrieval mismatch (2 cases)
+
+Both faithfulness and relevance are low, indicating the retrieved chunks are not about
+the question topic.
+
+---
+
+### Case 7 — State Pension qualifying age: key fact on un-retrieved page
+
+**Question:** What is the qualifying age for State Pension?  
+**Actual answer:** "The State Pension age varies depending on the individual and when they were born. The sources do not provide a single fixed age…"  
+**Judge scores:** Faithfulness 1 | Relevance 1 | Citation 1  
+**Judge rationale:** "The answer partially addresses the question but includes unsupported claims about birth-date eligibility and gradual increases, and one citation is mismatched while the exact age is not provided."
+
+**Retrieved chunk [1] snippet:**
+> "Home Responsibilities Protection — What you'll get: The amount of State Pension you may…"
+> 
+**Root cause:** The query matched pages about historical NI contributions (Home Responsibilities Protection, contracted-out pensions) rather than the main "State Pension age" checker page. The standard answer (currently 66, rising to 67 by 2028) is on a page that scored below the top-30 retrieved candidates.
+
+**Stage:** Retrieval — the most relevant page ("Check your State Pension age") was not ranked in the top 30. The historical/NI pages share vocabulary but not the core fact.  
+**Fix direction:** Add topic-based filtering or a classifier step to prefer "current guidance" pages over historical/supplementary pages.
+
+---
+
+### Case 8 — Carer's Allowance earnings limit: hallucinated figure with partial retraction
+
+**Question:** What is the earnings limit for Carer's Allowance?  
+**Actual answer:** "…if you earn more than £160 a week (after deductions), you will not be eligible for Carer's Allowance [not explicitly stated in provided sources]. I cannot find sufficient information in the guidance to answer this question."  
+**Judge scores:** Faithfulness 1 | Relevance 1 | Citation 1  
+**Judge rationale:** "The answer correctly cites source [1] for how earnings are calculated, but it introduces an unsupported £160 earnings limit and then refuses."
+
+**Retrieved chunk [2] snippet:**
+> "Carer's Allowance — How it works: You could get £86.45 a week if you care for someo…"
+
+**Root cause:** The earnings limit (£196/week as of April 2026) is on the Carer's Allowance eligibility page but was not in the retrieved chunks. The model hallucinates "£160/week" (an older limit from its training data), immediately flags it as unsupported, and then partially refuses. The result is a self-contradictory answer that neither commits to the figure nor guides the user to the correct source.
+
+**Stage:** Retrieval (earnings limit section not retrieved) + Generation (hallucination without full retraction).  
+**Fix direction:** Stronger system prompt instruction: "If you are unsure, say so clearly and direct the user to the GOV.UK page. Do not state a figure and immediately retract it."
 
 ---
 
 ## Summary table
 
-_[TBC — after eval run]_
+| Case | Question ID | Stage | Failure type | Faith | Rel | Cit | Fix direction |
+|------|-------------|-------|-------------|-------|-----|-----|--------------|
+| 1 | q004 | Retrieval | Fact in un-retrieved section | 0 | 3 | 0 | Increase `top_k_context` to 10 |
+| 2 | q035 | Retrieval | Query matched wrong topic page | 0 | 3 | 0 | Query rewriting / expansion |
+| 3 | q044 | Retrieval | Table row not in chunk boundaries | 0 | 3 | 0 | Table-aware chunking |
+| 4 | q009 | Retrieval | Duration sub-section not ranked | 0 | 3 | 0 | Increase `top_k_context` |
+| 5 | q008 | Generation | Over-cautious refusal on truncated snippet | 3 | 1 | 3 | Longer citation snippets |
+| 6 | q039 | Generation | No single chunk gives full definition | — | — | — | Multi-chunk synthesis prompt |
+| 7 | q023 | Retrieval | Main page below top-30 cutoff | 1 | 1 | 1 | Topic-based re-ranking |
+| 8 | q028 | Retrieval + Generation | Stale figure + partial retraction | 1 | 1 | 1 | Retrieval depth + prompt clarity |
 
-| Case | Stage | Failure type | Fix direction |
-|------|-------|-------------|--------------|
-| 1 | Retrieval | Term mismatch | Query expansion |
-| 2 | Retrieval | Multi-part miss | Larger top_k |
-| 3 | Generation | Table hallucination | Table-aware chunking |
-| 4 | Data | Stale guidance | Incremental refresh |
-| 5 | Guardrails | Over-refusal | Threshold tuning |
-| 6 | Generation | Citation placement | Prompt instruction |
-| 7 | Guardrails | Under-refusal | Threshold tuning |
-| 8 | Retrieval | Diversity failure | MMR retrieval |
+---
+
+## Overall assessment
+
+The pipeline's main weakness is **parametric leakage**: Qwen3-235B-A22B has strong
+prior knowledge of UK government figures and uses it when retrieved chunks are topically
+correct but lack the specific fact. This is an artefact of citation snippet truncation
+(300 chars) and chunk boundaries that often capture section introductions rather than
+the numeric tables they precede.
+
+The reranker improves citation quality and relevance slightly (composite 1.78 vs 1.67 for
+hybrid_800 without reranking) but cannot compensate for missing facts within chunks.
+
+The highest-impact fix for the next iteration would be **increasing chunk snippet length
+from 300 to 600 characters** and **expanding `top_k_context` from 6 to 10** — both
+are low-risk, one-line configuration changes that would expose more source text to the
+LLM before it falls back on parametric knowledge.

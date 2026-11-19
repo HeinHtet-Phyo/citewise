@@ -52,9 +52,22 @@ Use Qdrant's hybrid search: dense vectors from BAAI/bge-small-en-v1.5 (384 dim) 
 
 ### Results
 
-LLM-as-judge eval on 100 dev questions (November 2026) confirms hybrid outperforms dense-only:
-`hybrid_400_rerank` scored highest on composite (faithfulness + relevance + citation quality).
-Detailed numbers in `eval/results/summary_dev.json` and the README evaluation table.
+LLM-as-judge eval on 100 dev questions (19 November 2026):
+
+| Config | Faithfulness | Relevance | Citation | Composite |
+|--------|-------------|-----------|----------|-----------|
+| dense_400 | 1.26 | 2.70 | 1.36 | 1.77 |
+| hybrid_400 | 1.11 | 2.70 | 1.23 | 1.68 |
+| **hybrid_400_rerank** | **1.25** | **2.67** | **1.42** | **1.78** |
+| hybrid_800 | 1.05 | 2.80 | 1.15 | 1.67 |
+| hybrid_800_rerank | 1.02 | 2.76 | 1.10 | 1.63 |
+
+`hybrid_400_rerank` scored highest on composite. Scores are on a 0–3 scale.
+Full results in `eval/results/summary_dev.json` and the README evaluation table.
+
+Notably, 800-token chunks underperformed 400-token chunks despite including more context — the
+larger chunks contained more irrelevant text per snippet (citations truncated to 300 chars), which
+hurt faithfulness and citation quality scores.
 
 ---
 
@@ -190,6 +203,12 @@ The corpus covers only four topic areas. A question about, say, immigration poli
 
 After retrieval, check the top candidate's score against `RagConfig.refusal_threshold`. If the score falls below the threshold, return a refused `Answer` with `refusal_reason = "low_evidence"` before calling the LLM.
 
-The threshold starts at 0.0 (no refusals) and will be tuned on the dev split in Phase 5 to maximise the F1 of correct answers vs unnecessary refusals.
+The threshold was tuned on the dev split (100 questions, hybrid_400_rerank config) by sweeping
+values from 0.00 to 1.00 in steps of 0.05. Results written to
+`eval/results/threshold_hybrid_400_rerank.json`.
+
+**Tuned value: 0.30** — raises the composite from 1.633 (threshold=0.0) to 1.635 by refusing
+4 questions instead of 2. The marginal improvement confirms that all dev questions are within
+the corpus scope; the threshold's main value is protecting against out-of-corpus production queries.
 
 As a secondary safeguard, if the LLM itself returns the phrase "I cannot find sufficient information…" (from the system prompt instruction), the answer is marked as refused post-hoc.

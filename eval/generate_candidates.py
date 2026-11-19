@@ -57,6 +57,7 @@ CONFIGS: dict[str, RagConfig] = {
         top_k_retrieve=30,
         use_reranker=True,
         top_k_context=6,
+        refusal_threshold=0.3,  # tuned on dev split (19 Nov 2026)
     ),
     "hybrid_800": RagConfig(
         config_name="hybrid_800",

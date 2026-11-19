@@ -1,7 +1,8 @@
 """LLM-as-judge: score RAG answers on faithfulness, relevance, and citation quality.
 
-The judge uses Gemini (free tier) via LiteLLM and applies the same file-based
-LLM cache used by the RAG pipeline — so re-scoring the same answer costs nothing.
+The judge uses a Nebius-hosted Llama model (different family from the Gemini generator)
+to avoid self-preference bias. Applies the same file-based LLM cache used by the RAG
+pipeline — re-scoring the same answer costs nothing after the first run.
 """
 
 from __future__ import annotations
@@ -25,7 +26,8 @@ log = logging.getLogger(__name__)
 _PROMPTS_DIR = Path(__file__).parent.parent / "src" / "citewise" / "prompts"
 _JUDGE_SYSTEM = (_PROMPTS_DIR / "judge_system.txt").read_text(encoding="utf-8").strip()
 
-_JUDGE_MODEL = "gemini/gemini-2.0-flash"
+# Nebius-hosted Llama — different family from the Gemini generator to avoid self-preference bias.
+_JUDGE_MODEL = "openai/meta-llama/Meta-Llama-3.1-70B-Instruct"
 litellm.suppress_debug_info = True
 
 
@@ -66,7 +68,7 @@ def judge_answer(
     answer: str,
     refused: bool,
 ) -> Judgement:
-    """Score one question-answer pair using Gemini as judge.
+    """Score one question-answer pair using Nebius Llama-3.1-70B as judge.
 
     Returns a Judgement with per-dimension scores and a brief rationale.
     Uses the same LLM cache as the RAG pipeline.
@@ -96,7 +98,8 @@ def judge_answer(
             messages=messages,
             temperature=0.0,
             max_tokens=256,
-            api_key=settings.gemini_api_key or None,
+            base_url=settings.nebius_base_url or None,
+            api_key=settings.nebius_api_key or None,
         )
         text: str = response.choices[0].message.content or ""
         parsed = _parse_judge_response(text)

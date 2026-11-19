@@ -75,3 +75,76 @@ Look up the content ID for each topic via the Content API (`/api/content/<path>`
 | work/employment | `d0f1e5a3-c8f4-4780-8678-994f19104b21` |
 | housing | `4794066e-e3cc-425e-8cc4-e7ff3edb4c39` |
 | transport/driving | `a4038b29-b332-4f13-98b1-1c9709e216bc` |
+
+---
+
+## ADR-004 — Gemini 2.0 Flash for generation
+
+**Date:** 19 November 2026  
+**Status:** Implemented
+
+### Context
+
+The project budget is Gemini free-tier only. We need a model that:
+1. Follows precise citation-format instructions (uses `[n]` markers reliably)
+2. Has a long enough context window for 6 × 400-token chunks + system prompt (~3,000 tokens input)
+3. Is fast enough for interactive use
+
+### Decision
+
+Use `gemini/gemini-2.0-flash` via LiteLLM. Temperature = 0 for reproducible, factual answers.
+Nebius models (Llama-3 variants) are reserved for a future cost/quality comparison on the eval set.
+
+### Trade-offs
+
+- Free tier rate limits may cause retries; backed off with tenacity.
+- The file-based LLM cache (keyed on model + full prompt SHA-256) means the same question costs £0 on subsequent runs during development.
+
+---
+
+## ADR-005 — LLM-as-judge evaluation methodology
+
+**Date:** 19 November 2026  
+**Status:** Implemented
+
+### Context
+
+For a RAG system over factual government guidance, three dimensions matter:
+- **Faithfulness:** does the answer stay within the retrieved sources?
+- **Relevance:** does the answer address the question?
+- **Citation quality:** are the `[n]` markers correctly placed?
+
+We have no gold-standard reference answers for 150 questions, so we cannot use exact-match or ROUGE metrics.
+
+### Decision
+
+Use Gemini 2.0 Flash as an LLM judge (`eval/judge.py`) with a rubric that scores each dimension 0–3. The judge prompt instructs the model to output JSON only, which is parsed and stored.
+
+The judge re-uses the same LLM cache as the pipeline — repeated scoring of the same question costs nothing.
+
+**Dev/test split is sacred:** threshold and config selection are based only on dev-split scores; test-split scores are run once at the end for the final reported numbers.
+
+### Alternatives considered
+
+- **Human annotation:** More reliable but impractical for 150 × 5 configs = 750 evaluations.
+- **RAGAS framework:** Adds complexity and ties us to its scoring logic; a custom judge is more transparent and interview-explainable.
+- **Retrieval MRR/NDCG:** Would require labelled relevance judgements per question, which we don't have.
+
+---
+
+## ADR-006 — Refusal via evidence threshold
+
+**Date:** 19 November 2026  
+**Status:** Implemented (threshold = 0.0 pending dev-split tuning)
+
+### Context
+
+The corpus covers only four topic areas. A question about, say, immigration policy or tax returns will retrieve low-scoring chunks and produce a hallucinated or irrelevant answer.
+
+### Decision
+
+After retrieval, check the top candidate's score against `RagConfig.refusal_threshold`. If the score falls below the threshold, return a refused `Answer` with `refusal_reason = "low_evidence"` before calling the LLM.
+
+The threshold starts at 0.0 (no refusals) and will be tuned on the dev split in Phase 5 to maximise the F1 of correct answers vs unnecessary refusals.
+
+As a secondary safeguard, if the LLM itself returns the phrase "I cannot find sufficient information…" (from the system prompt instruction), the answer is marked as refused post-hoc.

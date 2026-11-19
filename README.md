@@ -1,0 +1,151 @@
+# Citewise
+
+**UK government guidance, answered with citations.**
+
+Citewise is a retrieval-augmented generation (RAG) system built over the [GOV.UK](https://www.gov.uk) content APIs. Ask a question about benefits, employment rights, housing, or driving — the system retrieves relevant passages, generates a grounded answer, and cites every claim back to a live GOV.UK page.
+
+Built as a portfolio project demonstrating production-quality RAG engineering for UK AI Engineer roles.
+
+---
+
+## Architecture
+
+```
+User question
+     │
+     ▼
+ Guardrails ──── unsafe / out-of-scope ──→ refuse
+     │
+     ▼
+ Qdrant hybrid search (BM25 + dense cosine)
+     │  retrieve top-30 candidate chunks
+     ▼
+ Cross-encoder reranker (ms-marco-MiniLM-L-6-v2)
+     │  rerank, deduplicate by URL, keep top-6
+     ▼
+ Gemini 2.0 Flash (citation-grounded prompt)
+     │
+     ▼
+ Answer with [n] citation markers + source cards
+```
+
+**Tech stack:** Python 3.11 · FastAPI · Pydantic v2 · Qdrant (hybrid BM25 + bge-small-en-v1.5) · fastembed · LiteLLM · tiktoken
+
+---
+
+## Corpus
+
+| Format | Count | Topics |
+|--------|-------|--------|
+| `answer` | 769 | All |
+| `guide` | 860 | All |
+| `detailed_guide` | 1,684 | Benefits, employment, housing, transport |
+| **Total** | **3,313** | — |
+
+Data from the [GOV.UK Search API](https://docs.publishing.service.gov.uk/repos/search-api/) and [Content API](https://content-api.publishing.service.gov.uk/), licenced under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
+
+---
+
+## Chunk statistics
+
+| Chunk size | Count | Avg tokens |
+|------------|-------|-----------|
+| 400 | 21,740 | 282 |
+| 800 | 12,311 | 486 |
+
+Adjacent short sections are greedily merged before splitting, so the 400- and 800-token sizes produce chunks that differ meaningfully (ratio 1.72×).
+
+---
+
+## Evaluation
+
+Experiments run on 100 development questions across four topics.
+LLM-as-judge scores are out of 3 for faithfulness, relevance, and citation quality.
+Results: **[TBC — pending index completion and eval run]**
+
+| Config | Faithfulness | Relevance | Citation | Refusal |
+|--------|-------------|-----------|----------|---------|
+| dense_400 | [TBC] | [TBC] | [TBC] | [TBC] |
+| hybrid_400 | [TBC] | [TBC] | [TBC] | [TBC] |
+| hybrid_400_rerank | [TBC] | [TBC] | [TBC] | [TBC] |
+| hybrid_800 | [TBC] | [TBC] | [TBC] | [TBC] |
+| hybrid_800_rerank | [TBC] | [TBC] | [TBC] | [TBC] |
+
+---
+
+## Project structure
+
+```
+citewise/
+├── src/citewise/
+│   ├── config.py          # Settings + RagConfig
+│   ├── models.py          # Chunk, Citation, Answer (Pydantic v2)
+│   ├── ingest/            # discover → fetch → clean → chunk
+│   ├── index/             # embed (bge + BM25) → upsert to Qdrant
+│   ├── retrieve.py        # hybrid search + rerank + dedup
+│   ├── guardrails.py      # input safety + evidence threshold
+│   ├── generate.py        # LiteLLM Gemini call + file-based cache
+│   ├── rag.py             # answer_question() entry point
+│   ├── prompts/           # system prompt + judge prompt
+│   └── api/               # FastAPI app + static UI
+├── eval/
+│   ├── questions/         # 100 dev + 50 test questions (JSONL)
+│   ├── generate_candidates.py
+│   ├── judge.py           # Gemini-as-judge scorer
+│   └── experiments.py     # run all configs, aggregate, print table
+├── tests/unit/            # 56 unit tests, all passing
+├── docs/                  # data notes, architecture decisions
+├── Dockerfile
+├── docker-compose.yml
+└── .github/workflows/ci.yml
+```
+
+---
+
+## Running locally
+
+### Prerequisites
+
+- Python 3.11
+- Docker (for Qdrant)
+- A `.env` file with `GEMINI_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY`
+
+```bash
+# 1. Set up the virtual environment
+make setup
+
+# 2. Download and chunk GOV.UK data (~10 min, one-off)
+make ingest
+
+# 3. Build the Qdrant index (requires Qdrant running or cloud URL in .env)
+make index-cloud
+
+# 4. Run the app
+make run
+# → http://localhost:8000
+```
+
+### Tests
+
+```bash
+make test   # ruff + mypy + 56 unit tests
+```
+
+---
+
+## Design decisions
+
+See [`docs/decisions.md`](docs/decisions.md) for the rationale behind:
+- Section-merge chunking strategy
+- Hybrid BM25 + dense search
+- Cross-encoder reranker choice
+- LLM-as-judge evaluation methodology
+- Refusal via evidence threshold
+
+---
+
+## Licence
+
+Code: MIT. Data: [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
+
+Built by [Hein Htet Phyo](https://github.com/HeinHtet-Phyo).

@@ -9,7 +9,11 @@ apikey.env
 # Data directories — large, re-creatable
 data/raw/
 data/cache/
+data/processed/
 .llm_cache/
+
+# Results from eval runs (re-runnable)
+eval/results/
 
 # Python
 __pycache__/

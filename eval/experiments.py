@@ -76,7 +76,7 @@ def run_experiments(split: str, config_names: list[str]) -> None:
     for config_name in config_names:
         results_path = RESULTS_DIR / f"{config_name}_{split}.jsonl"
 
-        needs_generate = not results_path.exists()
+        needs_generate = not results_path.exists() or results_path.stat().st_size == 0
         if not needs_generate:
             # Re-generate if any rows have generation errors (API was down on last run).
             error_count = sum(

@@ -11,6 +11,7 @@ import json
 import logging
 import re
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -64,7 +65,7 @@ def judge_answer(
     answer: str,
     refused: bool,
 ) -> Judgement:
-    """Score one question-answer pair using Nebius Llama-3.1-70B as judge.
+    """Score one question-answer pair using DeepSeek-V4.1-Flash as judge.
 
     Returns a Judgement with per-dimension scores and a brief rationale.
     Uses the same LLM cache as the RAG pipeline.
@@ -89,15 +90,37 @@ def judge_answer(
         parsed = None
 
     if parsed is None or not isinstance(parsed, dict):
-        response = litellm.completion(
-            model=_JUDGE_MODEL,
-            messages=messages,
-            temperature=0.0,
-            max_tokens=256,
-            base_url=settings.nebius_base_url or None,
-            api_key=settings.nebius_api_key or None,
-        )
-        text: str = response.choices[0].message.content or ""
+        # Retry up to 3 times — DeepSeek-V4.1-Flash occasionally returns empty content.
+        text = ""
+        for _attempt in range(3):
+            response = litellm.completion(
+                model=_JUDGE_MODEL,
+                messages=messages,
+                temperature=0.0,
+                max_tokens=4096,  # DeepSeek-V4.1-Flash uses ~600 internal reasoning tokens
+                base_url=settings.nebius_base_url or None,
+                api_key=settings.nebius_api_key or None,
+                timeout=90,
+            )
+            text = response.choices[0].message.content or ""
+            if text.strip():
+                break
+            log.warning(
+                "Judge returned empty response for %s (attempt %d/3)", question_id, _attempt + 1
+            )
+            time.sleep(3)
+
+        if not text.strip():
+            log.error("Judge failed all 3 attempts for %s — returning zero scores", question_id)
+            return Judgement(
+                question_id=question_id,
+                faithfulness=0,
+                relevance=0,
+                citation_quality=0,
+                rationale="[judge error: empty response after 3 attempts]",
+                refused=refused,
+            )
+
         parsed = _parse_judge_response(text)
 
         if settings.llm_cache_enabled:

@@ -1,0 +1,50 @@
+{"question_id": "q101", "question": "Can a non-UK national claim benefits in the UK?", "topic": "benefits", "split": "test"}
+{"question_id": "q102", "question": "What is the habitual residence test for benefits?", "topic": "benefits", "split": "test"}
+{"question_id": "q103", "question": "Can I appeal a Universal Credit decision?", "topic": "benefits", "split": "test"}
+{"question_id": "q104", "question": "Can I claim both PIP and Universal Credit at the same time?", "topic": "benefits", "split": "test"}
+{"question_id": "q105", "question": "What is the Sure Start Maternity Grant?", "topic": "benefits", "split": "test"}
+{"question_id": "q106", "question": "What is a Budgeting Loan and who can apply?", "topic": "benefits", "split": "test"}
+{"question_id": "q107", "question": "What is Disability Living Allowance and can new claimants apply for it?", "topic": "benefits", "split": "test"}
+{"question_id": "q108", "question": "What is the Severe Disability Premium?", "topic": "benefits", "split": "test"}
+{"question_id": "q109", "question": "Can a carer claim Universal Credit?", "topic": "benefits", "split": "test"}
+{"question_id": "q110", "question": "What is the Childcare Grant for full-time students in higher education?", "topic": "benefits", "split": "test"}
+{"question_id": "q111", "question": "How do I check my State Pension forecast?", "topic": "benefits", "split": "test"}
+{"question_id": "q112", "question": "How much savings can I have before Pension Credit is affected?", "topic": "benefits", "split": "test"}
+{"question_id": "q113", "question": "What is the housing benefit for a single person under 35?", "topic": "benefits", "split": "test"}
+{"question_id": "q114", "question": "Can I get Universal Credit and working tax credit at the same time?", "topic": "benefits", "split": "test"}
+{"question_id": "q115", "question": "How many hours per week must I be available for work under Universal Credit?", "topic": "benefits", "split": "test"}
+{"question_id": "q116", "question": "What is Statutory Adoption Pay and who is eligible?", "topic": "benefits", "split": "test"}
+{"question_id": "q117", "question": "What is the Household Support Fund?", "topic": "benefits", "split": "test"}
+{"question_id": "q118", "question": "Am I eligible for a Council Tax reduction as a student?", "topic": "benefits", "split": "test"}
+{"question_id": "q119", "question": "What is the qualifying age for Attendance Allowance?", "topic": "benefits", "split": "test"}
+{"question_id": "q120", "question": "How is the ESA assessment phase different from the main phase?", "topic": "benefits", "split": "test"}
+{"question_id": "q121", "question": "What is the Employment Allowance for employers?", "topic": "employment", "split": "test"}
+{"question_id": "q122", "question": "How does IR35 affect self-employed contractors?", "topic": "employment", "split": "test"}
+{"question_id": "q123", "question": "Can I be dismissed for taking part in a lawful strike?", "topic": "employment", "split": "test"}
+{"question_id": "q124", "question": "What is the apprenticeship minimum wage?", "topic": "employment", "split": "test"}
+{"question_id": "q125", "question": "What is a Fit Note and when does my employer require one?", "topic": "employment", "split": "test"}
+{"question_id": "q126", "question": "What are my rights if my employer goes into administration?", "topic": "employment", "split": "test"}
+{"question_id": "q127", "question": "Can my employer change my terms and conditions without my agreement?", "topic": "employment", "split": "test"}
+{"question_id": "q128", "question": "Am I entitled to pay during a period of lay-off or short-time working?", "topic": "employment", "split": "test"}
+{"question_id": "q129", "question": "What is the right to request time off for training?", "topic": "employment", "split": "test"}
+{"question_id": "q130", "question": "Am I entitled to written reasons for my dismissal?", "topic": "employment", "split": "test"}
+{"question_id": "q131", "question": "What is a leasehold property?", "topic": "housing", "split": "test"}
+{"question_id": "q132", "question": "What are my rights as a leaseholder regarding service charges?", "topic": "housing", "split": "test"}
+{"question_id": "q133", "question": "Can I buy a shared ownership property?", "topic": "housing", "split": "test"}
+{"question_id": "q134", "question": "What is a Lifetime ISA and can I use it towards a house purchase?", "topic": "housing", "split": "test"}
+{"question_id": "q135", "question": "How do I complain about a landlord to the local authority?", "topic": "housing", "split": "test"}
+{"question_id": "q136", "question": "What is ground rent and are there restrictions on how it can be charged?", "topic": "housing", "split": "test"}
+{"question_id": "q137", "question": "Am I entitled to a rent repayment order if my landlord has no licence?", "topic": "housing", "split": "test"}
+{"question_id": "q138", "question": "What is the decent homes standard for social housing?", "topic": "housing", "split": "test"}
+{"question_id": "q139", "question": "What is an environmental health inspection and when can it be requested?", "topic": "housing", "split": "test"}
+{"question_id": "q140", "question": "What is the Help to Buy equity loan?", "topic": "housing", "split": "test"}
+{"question_id": "q141", "question": "Can I drive in the UK with a foreign driving licence?", "topic": "transport", "split": "test"}
+{"question_id": "q142", "question": "What is the minimum age requirement for riding a moped in the UK?", "topic": "transport", "split": "test"}
+{"question_id": "q143", "question": "Do I need to register my vehicle when I move to the UK from abroad?", "topic": "transport", "split": "test"}
+{"question_id": "q144", "question": "How do I transfer a private number plate to another vehicle?", "topic": "transport", "split": "test"}
+{"question_id": "q145", "question": "What is the minimum age to drive a lorry or HGV?", "topic": "transport", "split": "test"}
+{"question_id": "q146", "question": "What is the new driver period after passing the driving test?", "topic": "transport", "split": "test"}
+{"question_id": "q147", "question": "What is the congestion charge zone and who must pay it?", "topic": "transport", "split": "test"}
+{"question_id": "q148", "question": "How do I renew my driving licence at age 70?", "topic": "transport", "split": "test"}
+{"question_id": "q149", "question": "What is the penalty for using a mobile phone while driving?", "topic": "transport", "split": "test"}
+{"question_id": "q150", "question": "Can I tow a trailer with a standard car driving licence?", "topic": "transport", "split": "test"}

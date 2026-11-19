@@ -1,0 +1,151 @@
+"""Generate RAG answer candidates for all eval questions.
+
+Usage:
+    python eval/generate_candidates.py --split dev --config hybrid_400
+    python eval/generate_candidates.py --split all --config dense_400
+
+Writes one JSONL file per (split, config) to eval/results/:
+    eval/results/<config>_<split>.jsonl
+
+Each line is a serialised Answer from citewise.models.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+from citewise.config import RagConfig
+from citewise.models import Answer
+from citewise.rag import answer_question
+
+log = logging.getLogger(__name__)
+
+QUESTIONS_DIR = Path(__file__).parent / "questions"
+RESULTS_DIR = Path(__file__).parent / "results"
+
+# Named experiment configs — tune only on dev split.
+CONFIGS: dict[str, RagConfig] = {
+    "dense_400": RagConfig(
+        config_name="dense_400",
+        chunk_size=400,
+        collection_name="citewise_400",
+        search_mode="dense",
+        top_k_retrieve=30,
+        use_reranker=False,
+        top_k_context=6,
+    ),
+    "hybrid_400": RagConfig(
+        config_name="hybrid_400",
+        chunk_size=400,
+        collection_name="citewise_400",
+        search_mode="hybrid",
+        top_k_retrieve=30,
+        use_reranker=False,
+        top_k_context=6,
+    ),
+    "hybrid_400_rerank": RagConfig(
+        config_name="hybrid_400_rerank",
+        chunk_size=400,
+        collection_name="citewise_400",
+        search_mode="hybrid",
+        top_k_retrieve=30,
+        use_reranker=True,
+        top_k_context=6,
+    ),
+    "hybrid_800": RagConfig(
+        config_name="hybrid_800",
+        chunk_size=800,
+        collection_name="citewise_800",
+        search_mode="hybrid",
+        top_k_retrieve=30,
+        use_reranker=False,
+        top_k_context=6,
+    ),
+    "hybrid_800_rerank": RagConfig(
+        config_name="hybrid_800_rerank",
+        chunk_size=800,
+        collection_name="citewise_800",
+        search_mode="hybrid",
+        top_k_retrieve=30,
+        use_reranker=True,
+        top_k_context=6,
+    ),
+}
+
+
+def _load_questions(split: str) -> list[dict[str, str]]:
+    """Load questions for the given split ('dev', 'test', or 'all')."""
+    questions: list[dict[str, str]] = []
+    for path in sorted(QUESTIONS_DIR.glob("questions_*.jsonl")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            q = json.loads(line)
+            if split == "all" or q["split"] == split:
+                questions.append(q)
+    return questions
+
+
+def run(split: str, config_name: str) -> None:
+    """Run the pipeline and write results to eval/results/."""
+    if config_name not in CONFIGS:
+        raise ValueError(f"Unknown config: {config_name}. Choose from: {list(CONFIGS)}")
+
+    config = CONFIGS[config_name]
+    questions = _load_questions(split)
+    log.info("Running %d questions with config=%s", len(questions), config_name)
+
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    output_path = RESULTS_DIR / f"{config_name}_{split}.jsonl"
+
+    with output_path.open("w", encoding="utf-8") as fh:
+        for i, q in enumerate(questions, start=1):
+            answer: Answer = answer_question(q["question"], config)
+            log.info(
+                "[%d/%d] %s — %dms (refused=%s)",
+                i,
+                len(questions),
+                q["question_id"],
+                answer.latency_ms,
+                answer.refused,
+            )
+            row = answer.model_dump()
+            row["question_id"] = q["question_id"]
+            row["topic"] = q["topic"]
+            fh.write(json.dumps(row) + "\n")
+
+    log.info("Wrote %d answers → %s", len(questions), output_path)
+
+
+def main() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+        stream=sys.stdout,
+    )
+    parser = argparse.ArgumentParser(description="Generate RAG answer candidates")
+    parser.add_argument(
+        "--split",
+        choices=["dev", "test", "all"],
+        default="dev",
+        help="Question split to run (default: dev)",
+    )
+    parser.add_argument(
+        "--config",
+        choices=list(CONFIGS),
+        default="hybrid_400_rerank",
+        help="Experiment config name (default: hybrid_400_rerank)",
+    )
+    args = parser.parse_args()
+    run(args.split, args.config)
+
+
+if __name__ == "__main__":
+    main()

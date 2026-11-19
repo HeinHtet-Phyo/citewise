@@ -1,13 +1,3 @@
----
-title: Citewise
-emoji: 📋
-colorFrom: blue
-colorTo: indigo
-sdk: docker
-app_port: 7860
-pinned: false
----
-
 # Citewise
 
 **UK government guidance, answered with citations.**
@@ -33,13 +23,13 @@ User question
  Cross-encoder reranker (ms-marco-MiniLM-L-6-v2)
      │  rerank, deduplicate by URL, keep top-6
      ▼
- Gemini 2.0 Flash (citation-grounded prompt)
+ Qwen3-235B-A22B via Nebius (citation-grounded prompt)
      │
      ▼
  Answer with [n] citation markers + source cards
 ```
 
-**Tech stack:** Python 3.11 · FastAPI · Pydantic v2 · Qdrant (hybrid BM25 + bge-small-en-v1.5) · fastembed · LiteLLM · tiktoken
+**Tech stack:** Python 3.11 · FastAPI · Pydantic v2 · Qdrant (hybrid BM25 + bge-small-en-v1.5) · fastembed · LiteLLM · Nebius (Qwen3-235B-A22B generator, DeepSeek-V4.1-Flash judge) · tiktoken
 
 ---
 
@@ -69,17 +59,25 @@ Adjacent short sections are greedily merged before splitting, so the 400- and 80
 
 ## Evaluation
 
-Experiments run on 100 development questions across four topics.
-LLM-as-judge scores are out of 3 for faithfulness, relevance, and citation quality.
-Results: **[TBC — pending index completion and eval run]**
+Experiments run on 100 development questions across four topics (benefits, employment, housing, transport).
+Generator: Qwen3-235B-A22B (Nebius). Judge: DeepSeek-V4.1-Flash (Nebius, different family).
+LLM-as-judge scores are 0–3 for faithfulness, relevance, and citation quality.
 
-| Config | Faithfulness | Relevance | Citation | Refusal |
-|--------|-------------|-----------|----------|---------|
-| dense_400 | [TBC] | [TBC] | [TBC] | [TBC] |
-| hybrid_400 | [TBC] | [TBC] | [TBC] | [TBC] |
-| hybrid_400_rerank | [TBC] | [TBC] | [TBC] | [TBC] |
-| hybrid_800 | [TBC] | [TBC] | [TBC] | [TBC] |
-| hybrid_800_rerank | [TBC] | [TBC] | [TBC] | [TBC] |
+**Dev split (100 questions, 5 configs):**
+
+| Config | Faithfulness | Relevance | Citation | Composite | Refusal |
+|--------|-------------|-----------|----------|-----------|---------|
+| dense_400 | [TBC] | [TBC] | [TBC] | [TBC] | [TBC] |
+| hybrid_400 | [TBC] | [TBC] | [TBC] | [TBC] | [TBC] |
+| hybrid_400_rerank | [TBC] | [TBC] | [TBC] | [TBC] | [TBC] |
+| hybrid_800 | [TBC] | [TBC] | [TBC] | [TBC] | [TBC] |
+| hybrid_800_rerank | [TBC] | [TBC] | [TBC] | [TBC] | [TBC] |
+
+**Test split (50 questions, best config):**
+
+| Config | Faithfulness | Relevance | Citation | Composite | Refusal |
+|--------|-------------|-----------|----------|-----------|---------|
+| [TBC] | [TBC] | [TBC] | [TBC] | [TBC] | [TBC] |
 
 ---
 
@@ -94,14 +92,14 @@ citewise/
 │   ├── index/             # embed (bge + BM25) → upsert to Qdrant
 │   ├── retrieve.py        # hybrid search + rerank + dedup
 │   ├── guardrails.py      # input safety + evidence threshold
-│   ├── generate.py        # LiteLLM Gemini call + file-based cache
+│   ├── generate.py        # LiteLLM Nebius call + file-based cache
 │   ├── rag.py             # answer_question() entry point
 │   ├── prompts/           # system prompt + judge prompt
 │   └── api/               # FastAPI app + static UI
 ├── eval/
 │   ├── questions/         # 100 dev + 50 test questions (JSONL)
 │   ├── generate_candidates.py
-│   ├── judge.py           # Gemini-as-judge scorer
+│   ├── judge.py           # DeepSeek-V4.1-Flash-as-judge scorer
 │   └── experiments.py     # run all configs, aggregate, print table
 ├── tests/unit/            # 56 unit tests, all passing
 ├── docs/                  # data notes, architecture decisions
@@ -117,8 +115,8 @@ citewise/
 ### Prerequisites
 
 - Python 3.11
-- Docker (for Qdrant)
-- A `.env` file with `GEMINI_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY`
+- Docker (for local Qdrant)
+- A `.env` file with `NEBIUS_API_KEY` and `QDRANT_URL`
 
 ```bash
 # 1. Set up the virtual environment
@@ -127,8 +125,9 @@ make setup
 # 2. Download and chunk GOV.UK data (~10 min, one-off)
 make ingest
 
-# 3. Build the Qdrant index (requires Qdrant running or cloud URL in .env)
-make index-cloud
+# 3. Start Qdrant and build the index
+docker compose up qdrant -d
+make index
 
 # 4. Run the app
 make run
@@ -140,6 +139,25 @@ make run
 ```bash
 make test   # ruff + mypy + 56 unit tests
 ```
+
+---
+
+## Deploying to Render
+
+The app is deployed to [Render.com](https://render.com) free tier using `render.yaml`.
+
+**Prerequisites before deploying:**
+1. Create a free cluster on [Qdrant Cloud](https://cloud.qdrant.io)
+2. Upload the index: set `QDRANT_URL` and `QDRANT_API_KEY` in `.env` to the cloud values, then run `make index`
+3. Connect your GitHub repo in Render; it will detect `render.yaml` automatically
+4. In the Render dashboard, set the following environment variables:
+   - `NEBIUS_API_KEY` — your Nebius Token Factory key
+   - `QDRANT_URL` — the Qdrant Cloud cluster URL
+   - `QDRANT_API_KEY` — the Qdrant Cloud API key
+
+**Memory:** 247 MB idle, 367 MB peak (measured locally) — fits within Render's 512 MB free tier.
+
+**Cold start note:** Render free tier sleeps after 15 minutes of inactivity. The first request after wakeup downloads ~300 MB of fastembed model files and takes ~60 seconds. Subsequent requests are fast.
 
 ---
 

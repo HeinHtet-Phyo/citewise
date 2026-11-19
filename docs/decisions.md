@@ -39,8 +39,8 @@ Ratio: 1.72× — the two sizes now differ enough for the ablation to be informa
 
 ## ADR-002 — Hybrid search (dense + BM25) in Qdrant
 
-**Date:** [TBC — set when Phase 2 retrieval is benchmarked]  
-**Status:** Planned
+**Date:** 19 November 2026  
+**Status:** Implemented
 
 ### Context
 
@@ -52,7 +52,9 @@ Use Qdrant's hybrid search: dense vectors from BAAI/bge-small-en-v1.5 (384 dim) 
 
 ### Results
 
-[TBC — retrieval sanity check results to be added after Phase 2]
+LLM-as-judge eval on 100 dev questions (November 2026) confirms hybrid outperforms dense-only:
+`hybrid_400_rerank` scored highest on composite (faithfulness + relevance + citation quality).
+Detailed numbers in `eval/results/summary_dev.json` and the README evaluation table.
 
 ---
 

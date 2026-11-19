@@ -71,6 +71,11 @@ def generate_answer(
             data = json.loads(cached.read_text(encoding="utf-8"))
             return data["text"], data["cost_gbp"], 0
 
+    # Route API credentials: Nebius models start with "openai/", Gemini otherwise.
+    _is_nebius = config.llm_model.startswith("openai/")
+    _api_key = settings.nebius_api_key if _is_nebius else (settings.gemini_api_key or None)
+    _base_url = settings.nebius_base_url if _is_nebius else None
+
     t0 = time.monotonic()
     _backoff = 10.0
     for _attempt in range(3):
@@ -80,15 +85,16 @@ def generate_answer(
                 messages=messages,
                 temperature=config.temperature,
                 max_tokens=config.max_tokens,
-                api_key=settings.gemini_api_key or None,
-                timeout=60,
+                api_key=_api_key or None,
+                base_url=_base_url or None,
+                timeout=120,
             )
             break
         except (RateLimitError, ServiceUnavailableError, Timeout) as exc:
             if _attempt == 2:
                 raise
             log.warning(
-                "Gemini rate-limit/503 (attempt %d/3) — backing off %.0fs: %s",
+                "LLM rate-limit/unavailable (attempt %d/3) — backing off %.0fs: %s",
                 _attempt + 1,
                 _backoff,
                 exc,

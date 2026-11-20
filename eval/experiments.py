@@ -1,17 +1,15 @@
-"""Run all experiment configs, judge answers, and produce a results table.
+"""Run experiment configs, judge answers, compute metrics and write summaries.
 
 Usage:
     python eval/experiments.py --split dev
     python eval/experiments.py --split test --configs hybrid_400_rerank
 
-Workflow:
-1. For each config in CONFIGS (or --configs), generate candidate answers
-   if eval/results/<config>_<split>.jsonl does not exist.
-2. Judge all answers with the LLM judge.
-3. Aggregate metrics and print a summary table.
-4. Write eval/results/summary_<split>.json.
-5. If split=dev, also tune the refusal threshold and write
-   eval/results/threshold_<config>.json for the best config.
+Workflow per config:
+1. Generate candidate answers if eval/results/<config>_<split>.jsonl is missing.
+2. Judge each non-refused answer (cached) and save judgements_<config>_<split>.jsonl.
+3. Compute metrics (eval/metrics.py).
+Then write summary_<split>.json, summary_<split>.csv and summary.md. On dev only, tune the
+refusal threshold for the best config and write threshold_<config>.json.
 """
 
 from __future__ import annotations
@@ -19,239 +17,201 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import statistics
 import sys
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from generate_candidates import CONFIGS
+from generate_candidates import CONFIGS, _chunk_map, _load_questions
 from generate_candidates import run as generate_run
-from judge import score_results_file
+from judge import judge_record
+from metrics import build_records, read_jsonl, summarise
+from report import write_csv, write_markdown
 
+from citewise.config import RagConfig
 from citewise.retrieve import retrieve
 
 RESULTS_DIR = Path(__file__).parent / "results"
+# Tuning constraint: choose the threshold with the best correctness while the false refusal
+# rate stays at or below this percentage (a project choice, tuned on dev only).
+MAX_FALSE_REFUSAL_PCT = 10.0
 log = logging.getLogger(__name__)
 
 
-def _aggregate(judgements: list) -> dict[str, float]:
-    """Compute mean scores from a list of Judgement objects."""
-    if not judgements:
-        return {}
-    faith = statistics.mean(j.faithfulness for j in judgements)
-    relev = statistics.mean(j.relevance for j in judgements)
-    citq = statistics.mean(j.citation_quality for j in judgements)
-    refusal_rate = sum(1 for j in judgements if j.refused) / len(judgements)
+def _has_generation_errors(rows: list[dict[str, Any]]) -> bool:
+    """True if any row records a failed generation (API was down on the last run)."""
+    return any(r.get("refusal_reason") == "generation_error" for r in rows)
+
+
+def _ensure_results(config_name: str, split: str) -> Path:
+    """Generate the results file if it is missing, empty or contains generation errors."""
+    path = RESULTS_DIR / f"{config_name}_{split}.jsonl"
+    if path.exists() and path.stat().st_size > 0 and not _has_generation_errors(read_jsonl(path)):
+        log.info("Reusing existing results: %s", path.name)
+        return path
+    path.unlink(missing_ok=True)
+    log.info("Generating candidates for config=%s split=%s", config_name, split)
+    generate_run(split=split, config_name=config_name)
+    return path
+
+
+def _backfill_context(row: dict[str, Any], config: RagConfig) -> dict[str, Any]:
+    """Add context_urls/context_texts to rows written before those fields existed."""
+    if "context_urls" in row:
+        return row
+    by_id = _chunk_map(config.chunk_size)
+    chunks = [by_id[i] for i in row.get("retrieved_chunk_ids") or [] if i in by_id]
     return {
-        "n": len(judgements),
-        "faithfulness_mean": round(faith, 3),
-        "relevance_mean": round(relev, 3),
-        "citation_quality_mean": round(citq, 3),
-        "refusal_rate": round(refusal_rate, 3),
-        "composite_mean": round((faith + relev + citq) / 3, 3),
+        **row,
+        "context_urls": [c.url for c in chunks],
+        "context_texts": [c.text for c in chunks],
     }
 
 
-def _load_latency_cost(results_path: Path) -> tuple[float, float]:
-    """Return (mean_latency_ms, total_cost_gbp) from a results file."""
-    latencies: list[int] = []
-    total_cost = 0.0
-    for line in results_path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        row = json.loads(line)
-        latencies.append(row.get("latency_ms", 0))
-        total_cost += row.get("cost_gbp", 0.0)
-    mean_lat = statistics.mean(latencies) if latencies else 0.0
-    return round(mean_lat, 1), round(total_cost, 4)
+def _judge_rows(rows: list[dict[str, Any]], questions: dict[str, Any]) -> dict[str, Any]:
+    """Judge every non-refused row and return verdicts keyed by question_id."""
+    judgements: dict[str, Any] = {}
+    for row in rows:
+        qid = row.get("question_id", "")
+        log.info("Judging %s", qid)
+        verdict = judge_record(row, questions.get(qid, {}))
+        if verdict is not None:
+            judgements[qid] = verdict
+    return judgements
+
+
+def evaluate_config(config_name: str, split: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Generate (if needed), judge and summarise one config; return (records, summary)."""
+    config = CONFIGS[config_name]
+    path = _ensure_results(config_name, split)
+    rows = [_backfill_context(r, config) for r in read_jsonl(path)]
+    questions = {q["question_id"]: q for q in _load_questions(split)}
+    judgements = _judge_rows(rows, questions)
+    out = RESULTS_DIR / f"judgements_{config_name}_{split}.jsonl"
+    out.write_text("".join(json.dumps(j) + "\n" for j in judgements.values()), encoding="utf-8")
+    records = build_records(rows, questions, judgements)
+    return records, summarise(records)
+
+
+def _top_scores(records: list[dict[str, Any]], config: RagConfig) -> list[float]:
+    """Retrieval-only top-chunk score per question (no LLM call)."""
+    scores: list[float] = []
+    for r in records:
+        try:
+            chunks = retrieve(r["question"], config)
+            scores.append(chunks[0].score if chunks else 0.0)
+        except Exception as exc:
+            log.warning("Retrieval failed for %s: %s", r.get("question_id"), exc)
+            scores.append(0.0)
+    return scores
+
+
+def _simulate_threshold(
+    records: list[dict[str, Any]], scores: list[float], threshold: float
+) -> list[dict[str, Any]]:
+    """Mark answered records as refused when their top score falls below the threshold."""
+    return [
+        {**r, "refused": True} if not r.get("refused") and s < threshold else r
+        for r, s in zip(records, scores, strict=True)
+    ]
+
+
+def _sweep_row(records: list[dict[str, Any]]) -> dict[str, Any]:
+    """Metrics for one simulated threshold."""
+    m = summarise(records)
+    return {
+        "refusal_recall": m["refusal_recall_pct"],
+        "refusal_recall_n": m["refusal_recall_pct_n"],
+        "false_refusal_rate": m["false_refusal_rate_pct"],
+        "answered_correct_pct": m["answer_correct_pct_of_answered"],
+        "answered_correct_n": m["answer_correct_pct_of_answered_n"],
+        "correct_pct_of_answerable": m["answer_correct_pct_of_answerable"],
+        "n_refused": sum(1 for r in records if r.get("refused")),
+    }
+
+
+def choose_threshold(sweep: dict[str, dict[str, Any]]) -> str | None:
+    """Best correct%-of-answerable with false refusal within the cap; ties favour recall."""
+    usable = {t: s for t, s in sweep.items() if s["correct_pct_of_answerable"] is not None}
+    if not usable:
+        return None
+    ok = {
+        t: s for t, s in usable.items() if (s["false_refusal_rate"] or 0) <= MAX_FALSE_REFUSAL_PCT
+    }
+    pool = ok or usable
+    return max(
+        pool,
+        key=lambda t: (
+            pool[t]["correct_pct_of_answerable"] if ok else -(pool[t]["false_refusal_rate"] or 0),
+            pool[t]["refusal_recall"] or 0,
+        ),
+    )
+
+
+def tune_threshold(config_name: str, records: list[dict[str, Any]]) -> float | None:
+    """Sweep refusal thresholds on dev, write threshold_<config>.json, return the best.
+
+    Only thresholds at or above the one the results were generated with can be simulated,
+    because lower thresholds would need answers that were never generated.
+    """
+    config = CONFIGS[config_name]
+    scores = _top_scores(records, config)
+    start = round(config.refusal_threshold / 0.05)
+    sweep: dict[str, dict[str, Any]] = {}
+    for step in range(start, 21):
+        t = round(step * 0.05, 2)
+        sweep[str(t)] = _sweep_row(_simulate_threshold(records, scores, t))
+    best = choose_threshold(sweep)
+    output = {
+        "config": config_name,
+        "generated_at_threshold": config.refusal_threshold,
+        "max_false_refusal_pct": MAX_FALSE_REFUSAL_PCT,
+        "best_threshold": float(best) if best is not None else None,
+        "best": sweep.get(best) if best is not None else None,
+        "sweep": sweep,
+    }
+    (RESULTS_DIR / f"threshold_{config_name}.json").write_text(
+        json.dumps(output, indent=2), encoding="utf-8"
+    )
+    return float(best) if best is not None else None
 
 
 def run_experiments(split: str, config_names: list[str]) -> None:
-    """Generate candidates (if needed), judge, aggregate, and save summary."""
+    """Evaluate each config, write summaries, and tune the threshold on dev."""
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    summary: dict[str, dict[str, float]] = {}
+    summary: dict[str, dict[str, Any]] = {}
+    all_records: dict[str, list[dict[str, Any]]] = {}
+    for name in config_names:
+        all_records[name], summary[name] = evaluate_config(name, split)
 
-    for config_name in config_names:
-        results_path = RESULTS_DIR / f"{config_name}_{split}.jsonl"
+    (RESULTS_DIR / f"summary_{split}.json").write_text(json.dumps(summary, indent=2), "utf-8")
+    write_csv(summary, RESULTS_DIR / f"summary_{split}.csv")
+    md_path = write_markdown(RESULTS_DIR)
+    print(md_path.read_text(encoding="utf-8"))
 
-        needs_generate = not results_path.exists() or results_path.stat().st_size == 0
-        if not needs_generate:
-            # Re-generate if any rows have generation errors (API was down on last run).
-            error_count = sum(
-                1
-                for line in results_path.read_text(encoding="utf-8").splitlines()
-                if line.strip() and json.loads(line).get("refusal_reason") == "generation_error"
-            )
-            if error_count:
-                log.info(
-                    "Re-generating %s — %d generation errors remain", results_path.name, error_count
-                )
-                results_path.unlink()
-                needs_generate = True
-
-        if needs_generate:
-            log.info("Generating candidates for config=%s split=%s", config_name, split)
-            generate_run(split=split, config_name=config_name)
-        else:
-            log.info("Reusing existing results: %s", results_path.name)
-
-        log.info("Judging %s ...", results_path.name)
-        judgements = score_results_file(results_path)
-
-        metrics = _aggregate(judgements)
-        mean_lat, total_cost = _load_latency_cost(results_path)
-        metrics["mean_latency_ms"] = mean_lat
-        metrics["total_cost_gbp"] = total_cost
-
-        summary[config_name] = metrics
-        log.info(
-            "%s → faith=%.2f rel=%.2f cit=%.2f refusal=%.0f%%",
-            config_name,
-            metrics["faithfulness_mean"],
-            metrics["relevance_mean"],
-            metrics["citation_quality_mean"],
-            metrics["refusal_rate"] * 100,
-        )
-
-    # Print aligned results table
-    _print_table(summary)
-
-    # Save machine-readable summary
-    output = RESULTS_DIR / f"summary_{split}.json"
-    output.write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    log.info("Summary saved → %s", output)
-
-    # Threshold tuning on dev split only
-    if split == "dev" and config_names:
-        # Tune on the highest-composite config
-        best_config = max(summary, key=lambda c: summary[c].get("composite_mean", 0.0))
-        log.info("Tuning refusal threshold on dev split for best config: %s", best_config)
-        best_judgements = score_results_file(RESULTS_DIR / f"{best_config}_{split}.jsonl")
-        best_threshold = tune_threshold(
-            best_config,
-            RESULTS_DIR / f"{best_config}_{split}.jsonl",
-            best_judgements,
-        )
-        log.info("Recommended refusal_threshold: %.2f", best_threshold)
-        print(f"\n→ Recommended refusal_threshold for {best_config}: {best_threshold:.2f}")
-
-
-def tune_threshold(config_name: str, results_path: Path, judgements: list) -> float:
-    """Find the refusal threshold that maximises composite score on the dev split.
-
-    Runs retrieval-only (no LLM) for each question to get the top-chunk score,
-    then sweeps threshold values and picks the one with the best mean composite
-    score on non-refused answers.
-
-    Result written to eval/results/threshold_<config>.json.
-    Returns the optimal threshold.
-    """
-    if config_name not in CONFIGS:
-        log.warning("Config %s not found — skipping threshold tuning", config_name)
-        return 0.0
-
-    config = CONFIGS[config_name]
-
-    # Load questions from results file (preserves order)
-    rows = []
-    for line in results_path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if line:
-            rows.append(json.loads(line))
-
-    log.info("Retrieving scores for %d dev questions (threshold tuning)…", len(rows))
-    top_scores: list[float] = []
-    for row in rows:
-        try:
-            chunks = retrieve(row["question"], config)
-            top_scores.append(chunks[0].score if chunks else 0.0)
-        except Exception as exc:
-            log.warning("Retrieval failed for %s: %s", row.get("question_id"), exc)
-            top_scores.append(0.0)
-
-    # Map question_id → (top_score, judge_composite)
-    judge_map: dict[str, float] = {}
-    for j in judgements:
-        composite = (j.faithfulness + j.relevance + j.citation_quality) / 3.0
-        judge_map[j.question_id] = composite
-
-    id_list = [r.get("question_id", f"q{i}") for i, r in enumerate(rows)]
-
-    best_threshold = 0.0
-    best_score = -1.0
-    threshold_results: dict[str, object] = {}
-
-    for t in [round(x * 0.05, 2) for x in range(21)]:  # 0.00 to 1.00 in steps of 0.05
-        kept = [
-            judge_map[qid]
-            for qid, sc in zip(id_list, top_scores, strict=False)
-            if sc >= t and qid in judge_map
-        ]
-        refused_count = sum(1 for sc in top_scores if sc < t)
-        mean_comp = statistics.mean(kept) if kept else 0.0
-        threshold_results[str(t)] = {
-            "mean_composite": round(mean_comp, 3),
-            "n_answered": len(kept),
-            "n_refused": refused_count,
-        }
-        if mean_comp > best_score:
-            best_score = mean_comp
-            best_threshold = t
-
-    output = {
-        "config": config_name,
-        "best_threshold": best_threshold,
-        "best_composite": round(best_score, 3),
-        "sweep": threshold_results,
-    }
-    out_path = RESULTS_DIR / f"threshold_{config_name}.json"
-    out_path.write_text(json.dumps(output, indent=2), encoding="utf-8")
-    log.info(
-        "Best threshold for %s: %.2f (composite=%.3f) → %s",
-        config_name,
-        best_threshold,
-        best_score,
-        out_path,
-    )
-    return best_threshold
-
-
-def _print_table(summary: dict[str, dict[str, float]]) -> None:
-    header = f"{'Config':<25} {'Faith':>6} {'Relev':>6} {'Cit':>6} {'Comp':>6} {'Refusal':>8} {'Lat(ms)':>8} {'Cost(£)':>8}"
-    print("\n" + header)
-    print("-" * len(header))
-    for config, m in summary.items():
-        print(
-            f"{config:<25} "
-            f"{m['faithfulness_mean']:>6.2f} "
-            f"{m['relevance_mean']:>6.2f} "
-            f"{m['citation_quality_mean']:>6.2f} "
-            f"{m['composite_mean']:>6.2f} "
-            f"{m['refusal_rate'] * 100:>7.0f}% "
-            f"{m['mean_latency_ms']:>8.0f} "
-            f"{m['total_cost_gbp']:>8.4f}"
-        )
-    print()
+    if split != "dev":
+        return
+    scored = {c: m["answer_correct_pct_of_answerable"] for c, m in summary.items()}
+    scored = {c: v for c, v in scored.items() if v is not None}
+    if not scored:
+        log.warning("No reference-answer correctness available — skipping threshold tuning")
+        return
+    best_config = max(scored, key=lambda c: scored[c])
+    best = tune_threshold(best_config, all_records[best_config])
+    print(f"\nRecommended refusal_threshold for {best_config}: {best}")
 
 
 def main() -> None:
+    """CLI entry point."""
     logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(message)s",
-        stream=sys.stdout,
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", stream=sys.stdout
     )
     parser = argparse.ArgumentParser(description="Run eval experiments")
     parser.add_argument("--split", choices=["dev", "test"], default="dev")
-    parser.add_argument(
-        "--configs",
-        default=",".join(CONFIGS.keys()),
-        help="Comma-separated list of config names (default: all)",
-    )
+    parser.add_argument("--configs", default=",".join(CONFIGS.keys()))
     args = parser.parse_args()
-    config_names = [c.strip() for c in args.configs.split(",")]
-    run_experiments(args.split, config_names)
+    run_experiments(args.split, [c.strip() for c in args.configs.split(",")])
 
 
 if __name__ == "__main__":

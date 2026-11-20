@@ -7,7 +7,9 @@ Usage:
 Writes one JSONL file per (split, config) to eval/results/:
     eval/results/<config>_<split>.jsonl
 
-Each line is a serialised Answer from citewise.models.
+Each line is a serialised Answer from citewise.models plus question_id, topic,
+context_urls (ordered URLs of the chunks given to the LLM) and context_texts
+(the full text of those chunks, same order).
 """
 
 from __future__ import annotations
@@ -21,8 +23,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from citewise.config import RagConfig
-from citewise.models import Answer
+from citewise.ingest.chunk import load_chunks
+from citewise.models import Answer, Chunk
 from citewise.rag import answer_question
+from citewise.retrieve import retrieve
 
 log = logging.getLogger(__name__)
 
@@ -80,16 +84,47 @@ CONFIGS: dict[str, RagConfig] = {
 }
 
 
-def _load_questions(split: str) -> list[dict[str, str]]:
+_CHUNK_MAPS: dict[int, dict[str, Chunk]] = {}
+
+
+def _chunk_map(chunk_size: int) -> dict[str, Chunk]:
+    """Load chunk_id -> Chunk for one chunk size once and cache it."""
+    if chunk_size not in _CHUNK_MAPS:
+        _CHUNK_MAPS[chunk_size] = {c.chunk_id: c for c in load_chunks(chunk_size)}
+    return _CHUNK_MAPS[chunk_size]
+
+
+def context_for_row(row: dict, config: RagConfig) -> tuple[list[str], list[str]]:
+    """Return (urls, texts) of the context chunks in rank order for one result row.
+
+    Uses retrieved_chunk_ids (the post-rerank, post-dedup context). Rows refused before
+    generation carry no ids, so retrieval is re-run (no LLM call) to measure retrieval.
+    """
+    ids: list[str] = row.get("retrieved_chunk_ids") or []
+    if ids:
+        by_id = _chunk_map(config.chunk_size)
+        chunks = [by_id[i] for i in ids if i in by_id]
+        return [c.url for c in chunks], [c.text for c in chunks]
+    if row.get("refusal_reason") in ("unsafe", "generation_error"):
+        return [], []
+    try:
+        retrieved = retrieve(row["question"], config)
+    except Exception as exc:
+        log.warning("Retrieval for context failed for %s: %s", row.get("question_id"), exc)
+        return [], []
+    return [rc.chunk.url for rc in retrieved], [rc.chunk.text for rc in retrieved]
+
+
+def _load_questions(split: str) -> list[dict]:
     """Load questions for the given split ('dev', 'test', or 'all')."""
-    questions: list[dict[str, str]] = []
+    questions: list[dict] = []
     for path in sorted(QUESTIONS_DIR.glob("questions_*.jsonl")):
         for line in path.read_text(encoding="utf-8").splitlines():
             line = line.strip()
             if not line:
                 continue
             q = json.loads(line)
-            if split == "all" or q["split"] == split:
+            if split == "all" or q.get("split") == split:
                 questions.append(q)
     return questions
 
@@ -133,6 +168,8 @@ def run(split: str, config_name: str) -> None:
                     "latency_ms": 0,
                     "cost_gbp": 0.0,
                     "retrieved_chunk_ids": [],
+                    "context_urls": [],
+                    "context_texts": [],
                     "trace_id": None,
                 }
                 fh.write(json.dumps(row) + "\n")
@@ -149,6 +186,7 @@ def run(split: str, config_name: str) -> None:
             row = answer.model_dump()
             row["question_id"] = q["question_id"]
             row["topic"] = q["topic"]
+            row["context_urls"], row["context_texts"] = context_for_row(row, config)
             fh.write(json.dumps(row) + "\n")
 
     if errors:

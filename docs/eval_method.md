@@ -58,12 +58,12 @@ latency and cost per answer. Denominators are printed next to every number in `e
 ## Dev and test discipline
 
 - Configs, prompts and thresholds were chosen on the dev split only.
-- The test split was run once per config: `hybrid_400_rerank`, `dense_400` and `L_dense`.
+- The test split was run once per config: `hybrid_400_rerank`, `dense_400` and `L_dense`, then once more for `L2_dense` (the refusal fix). `L2_dense` was designed on dev and a 20-question spot check, and its test run was not used to change it.
 - Selection rule fixed before the test run: highest correct% of answerable questions with made-up
   rate at most 10% and refusal recall at least 90% on dev. That rule picks `hybrid_400_rerank`, whose
   dev made-up rate (6.5%) turned out to be 20.0% on test. With about 46 answered dev questions the dev
   estimate was too noisy. I did not re-pick on test.
-- The live demo runs `L_dense` because `hybrid_400_rerank` needs about 1.9 GB of memory (see below).
+- The live demo runs `L2_dense` (`L_dense` with a partial-answer prompt) because `hybrid_400_rerank` needs about 1.9 GB of memory (see below).
 
 ## Small samples
 

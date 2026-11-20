@@ -261,3 +261,7 @@ Deploy `L_dense` (dense search plus `answer_v2` and the claim verifier), chosen 
 ### Consequences
 
 The deployed config has its own test numbers (README). Retrieval is weaker than hybrid with reranking (hit rate 89.8% vs 92.9% on test) and the dense config has lower refusal recall (93.3% vs 96.7%).
+
+## ADR-009 — Refusal fix: `L2_dense`
+
+Live spot checks showed common questions being refused. Diagnosis (20 questions, step by step): retrieval scores were high and the threshold is 0; refusals came from the LLM (two corpus gaps and one over-strict prompt) and from the claim verifier flagging "the guidance does not cover" sentences. Decision: answer prompt v3 (partial answers allowed) and a verifier filter for limitation sentences, deployed as `L2_dense`. Dev: refusal recall stayed 100.0% (n=15); correctness equal at 72.3%. Test (run once): recall 96.7%, correct 65.3% (down from 69.4%), made-up 7.4%. Consequence: fewer visible refusals on real questions at the price of slightly lower measured correctness on test; both numbers are in the README.

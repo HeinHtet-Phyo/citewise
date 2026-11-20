@@ -1,0 +1,9 @@
+{
+  "measured_on": "2026-11-20",
+  "service": "https://citewise-v5w7.onrender.com (Render free tier, config L2_dense)",
+  "idle_before_s": 1000,
+  "wake_to_first_health_s": 56.3,
+  "first_ask_after_wake_s": 10.7,
+  "second_ask_s": 2.7,
+  "note": "single measurement"
+}

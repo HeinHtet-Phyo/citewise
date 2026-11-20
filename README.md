@@ -4,7 +4,7 @@
 
 **UK government guidance, answered with citations.**
 
-**Live demo: https://citewise-v5w7.onrender.com/** (free tier: the first request after idle can take a while while the server wakes up)
+**Live demo: https://citewise-v5w7.onrender.com/** (free tier: after idle the first load takes about a minute while the server wakes up)
 
 <!-- TODO(Hein): record a short demo GIF and put it at images/demo.gif, then uncomment:
 ![Citewise demo](images/demo.gif)
@@ -23,7 +23,8 @@ All figures come from `eval/results/summary_test.json`; denominators are in `sum
 |---|---|---|---|---|---|---|---|
 | hybrid_400_rerank (best retrieval) | 73.5% | 71.6% | 20.0% | 96.7% | 4.1% | 92.9% | 528 ms |
 | dense_400 | 69.4% | 83.3% | 8.3% | 93.3% | 4.1% | 89.8% | 934 ms |
-| **L_dense (deployed)** | 69.4% | 80.6% | 6.5% | 93.3% | 7.1% | 89.8% | 1,533 ms |
+| L_dense (first deployed version) | 69.4% | 80.6% | 6.5% | 93.3% | 7.1% | 89.8% | 1,533 ms |
+| **L2_dense (deployed)** | 65.3% | 83.0% | 7.4% | 96.7% | 5.1% | 89.8% | 1,330 ms |
 
 "Made-up" means the answer states a fact that is not in the cited sources (parametric leakage;
 see below). Development-split numbers, including the other experiments, are in
@@ -44,11 +45,42 @@ it. I measured it, then tried fixes one at a time on the **dev** split (62 quest
 | B_v2 | + stricter answer prompt | 74.5% | 13.0% |
 | C_verify | + sentence-level claim verifier | 70.2% | 4.5% |
 | L_dense | dense + stricter prompt + verifier | 72.3% | 6.7% |
+| L2_dense | + partial-answer prompt (v3) and verifier ignores "guidance does not cover" lines | 72.3% | 9.1% |
+
+The made-up rates are indicative only: the two judges agree reasonably on correctness (kappa 0.50) but poorly on the made-up flag (kappa 0.00).
 
 Honest reading: the verifier lowers made-up answers on dev but costs correctness, and on the test
 split the benefit is small (L_dense 6.5% against dense_400 8.3%). The hybrid config's made-up rate
 rose from 6.5% on dev to 20.0% on test, which shows how noisy a 46-answer dev sample is. I did not
 re-pick the config on test results.
+
+### Why the live site refused common questions, and the fix
+
+I ran 20 common questions step by step (`scripts/diagnose_refusals.py`). Retrieval scores were high
+(0.77 to 0.89) and the evidence threshold is 0, so score was not the cause. Of the 20 questions with
+`L_dense`, 4 were refused and 2 more lost sentences:
+
+- 3 were the model replying "I cannot find sufficient information": two are real corpus gaps
+  (no Council Tax rates page, no State Pension age page in the 3,313 pages), and one ("When does my
+  MOT expire?") was the prompt being too strict about partial answers.
+- 1 ("How much notice must my landlord give?") was the claim verifier flagging "the guidance does
+  not specify..." sentences, which then triggered repair and drop.
+
+The fix (`L2_dense`): a prompt (v3) that answers from a source that states the rule or the method
+and says what is missing, and a verifier that never counts "the guidance does not cover" sentences
+as unsupported. Refusals on the 20 questions fell from 4 to 2, both genuine corpus gaps.
+
+| Eval split | Config | Correct (answerable) | Made-up | Refusal recall | False refusal |
+|---|---|---|---|---|---|
+| dev | L_dense | 72.3% | 6.7% | 100.0% (n=15) | 4.3% |
+| dev | L2_dense | 72.3% | 9.1% | 100.0% (n=15) | 6.4% |
+| test | L_dense | 69.4% | 6.5% | 93.3% (n=30) | 7.1% |
+| test | L2_dense | 65.3% | 7.4% | 96.7% (n=30) | 5.1% |
+
+Refusal recall on must-refuse questions did not fall. Correctness on the eval set did not improve
+(equal on dev, 4 points lower on test, about 4 questions) so the gain shows up on the real-world
+spot check, not in the eval numbers. The 20 questions were also the ones used to design the fix, so
+treat that improvement as anecdotal.
 
 ## Limitations (read this)
 
@@ -62,7 +94,7 @@ re-pick the config on test results.
 - **Small samples.** Dev has 62 questions (47 answerable) and test has 128 (98 answerable); expect
   differences of a few points to be noise. No confidence intervals yet.
 - **The fixes are not shown to help on test.** See above.
-- **Live behaviour:** some answerable questions are refused (for example State Pension age and tenancy notice periods in my spot checks), in line with the 7.1% test false-refusal rate. The API lists every retrieved source as a citation, not only the ones the answer uses.
+- **Live behaviour:** some answerable questions are refused (for example State Pension age and tenancy notice periods in my spot checks), in line with the 7.1% test false-refusal rate. The API returns every retrieved source; the web page shows the sources the answer cites `[n]` first and puts the rest under "Other pages searched". Eval metric definitions are unchanged: they still score the full retrieved list.
 - **Live-service limits are in memory:** the rate limiter (10 per minute) and the daily spend cap
   (£0.50) reset on restart.
 
@@ -75,23 +107,23 @@ flowchart LR
     G --> S[Qdrant dense search<br/>bge-small, 21,740 chunks]
     S --> T{Evidence threshold}
     T -- weak --> R
-    T --> L[Qwen3-235B answer<br/>prompt v2, numbered sources]
+    T --> L[Qwen3-235B answer<br/>prompt v3, numbered sources]
     L --> V[Claim verifier<br/>Qwen3-30B per sentence]
     V -- unsupported --> X[Regenerate once, drop sentences,<br/>or refuse]
     V -- supported --> A[Answer with citations]
     X --> A
 ```
 
-The deployed config (`L_dense`) uses dense retrieval only. The best retrieval config adds BM25
+The deployed config (`L2_dense`) uses dense retrieval only. The best retrieval config adds BM25
 hybrid search and a cross-encoder reranker, but peaked at 1,944.6 MiB in my measurement, which does
 not fit Render's 512 MB free tier.
 
 | Deployed config | Idle | Peak (10 requests) | Cold start | First request |
 |---|---|---|---|---|
-| L_dense | 245.1 MiB | 375.0 MiB | 2.9 s | 2.2 s |
+| L2_dense (same models as L_dense) | 245.1 MiB | 375.0 MiB | 2.9 s | 2.2 s |
 | hybrid_400_rerank | 245.4 MiB | 1,944.6 MiB | 1.7 s | n/a |
 
-Measured locally in Docker (`eval/results/memory.json`). Render's real wake-up time is not measured [TBC].
+Measured locally in Docker for `L_dense` (`eval/results/memory.json`); `L2_dense` only changes a prompt. On Render's free tier after about 17 minutes idle, the first health response took 56.3 s, the first question after that 10.7 s, and the next 2.7 s (one measurement, `eval/results/render_cold_start.json`).
 
 **Stack:** Python 3.11 · FastAPI · Pydantic v2 · Qdrant · fastembed · LiteLLM · Nebius
 (Qwen3-235B generator, Qwen3-30B verifier, DeepSeek-V4.1-Flash judge) · Docker · GitHub Actions.
@@ -116,9 +148,9 @@ with root causes, for example:
 
 ## Engineering
 
-- 110 tests (unit and integration), `ruff`, `mypy --strict`, run in GitHub Actions on every push.
+- 111 tests (unit and integration), `ruff`, `mypy --strict`, run in GitHub Actions on every push.
 - An optional smoke-eval CI job runs only when a `NEBIUS_API_KEY` repository secret is set.
-- Rate limit (10 per minute per client) and a daily spend cap that returns HTTP 503 when exhausted.
+- Rate limit (10 per minute per client, keyed on `X-Forwarded-For` behind Render's proxy) and a daily spend cap that returns HTTP 503 when exhausted.
 - Embedding and reranker models are baked into the Docker image so there is no download at start-up.
 - Deterministic Qdrant point IDs (`uuid5` of the chunk id) so re-indexing never duplicates.
 - LLM responses are cached on disk during development; cost per answer is tracked.

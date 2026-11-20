@@ -69,6 +69,8 @@ class Answer(BaseModel):
     cost_gbp: float
     retrieved_chunk_ids: list[str]
     trace_id: str | None
+    verifier_path: str | None = None   # none | passed | repaired | dropped | refused
+    context_texts: list[str] = []      # text given to the LLM; excluded from API output
 ```
 
 `answer_question(question: str, config: RagConfig) -> Answer` in `src/citewise/rag.py` is the single entry point for the pipeline.

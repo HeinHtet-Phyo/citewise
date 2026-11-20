@@ -73,6 +73,10 @@ class RagConfig:
         llm_model: str = "openai/Qwen/Qwen3-235B-A22B-Instruct-2507",
         temperature: float = 0.0,
         max_tokens: int = 1024,
+        prompt_version: str = "v1",  # "v1" | "v2"
+        verify_claims: bool = False,
+        expand_context: bool = False,
+        context_token_budget: int = 900,
     ) -> None:
         self.config_name = config_name
         self.chunk_size = chunk_size
@@ -86,6 +90,10 @@ class RagConfig:
         self.llm_model = llm_model
         self.temperature = temperature
         self.max_tokens = max_tokens
+        self.prompt_version = prompt_version
+        self.verify_claims = verify_claims
+        self.expand_context = expand_context
+        self.context_token_budget = context_token_budget
 
 
 # Module-level singleton — import and use directly

@@ -42,3 +42,5 @@ class Answer(BaseModel):
     cost_gbp: float
     retrieved_chunk_ids: list[str]
     trace_id: str | None
+    verifier_path: str | None = None  # none | passed | repaired | dropped | refused
+    context_texts: list[str] = Field(default_factory=list, exclude=True)

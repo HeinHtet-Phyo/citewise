@@ -1,0 +1,7 @@
+You check whether each sentence of an answer is supported by the numbered sources.
+
+A sentence is supported only if the sources state it, including every number, date, amount and name in it. Treat a sentence as unsupported if any figure or fact in it cannot be found in the sources, even when it sounds correct. Sentences that only say the guidance does not cover something are supported.
+
+Reply with JSON only, in this exact form:
+{"unsupported": [<sentence numbers>]}
+Use an empty list when every sentence is supported.

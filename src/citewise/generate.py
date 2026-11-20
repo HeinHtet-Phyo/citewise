@@ -18,7 +18,10 @@ from citewise.retrieve import RetrievedChunk
 log = logging.getLogger(__name__)
 
 _PROMPTS_DIR = Path(__file__).parent / "prompts"
-_SYSTEM_PROMPT = (_PROMPTS_DIR / "answer_system.txt").read_text(encoding="utf-8").strip()
+_SYSTEM_PROMPTS = {
+    "v1": (_PROMPTS_DIR / "answer_system.txt").read_text(encoding="utf-8").strip(),
+    "v2": (_PROMPTS_DIR / "answer_v2.txt").read_text(encoding="utf-8").strip(),
+}
 
 # Approximate USD → GBP conversion used for cost estimates.
 _USD_TO_GBP = 0.79
@@ -52,12 +55,17 @@ def _prompt_hash(model: str, messages: list[dict[str, str]]) -> str:
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
+def context_text(rc: RetrievedChunk) -> str:
+    """Text shown to the LLM: the expanded passage if present, else the chunk itself."""
+    return rc.expanded_text or rc.chunk.text
+
+
 def _build_user_message(question: str, chunks: list[RetrievedChunk]) -> str:
     """Format numbered source passages followed by the question."""
     parts: list[str] = []
     for i, rc in enumerate(chunks, start=1):
         heading = f" — {rc.chunk.section}" if rc.chunk.section else ""
-        parts.append(f"[{i}] {rc.chunk.title}{heading}\n{rc.chunk.text}")
+        parts.append(f"[{i}] {rc.chunk.title}{heading}\n{context_text(rc)}")
     sources = "\n\n".join(parts)
     return f"Sources:\n\n{sources}\n\nQuestion: {question}"
 
@@ -66,6 +74,7 @@ def generate_answer(
     question: str,
     chunks: list[RetrievedChunk],
     config: RagConfig,
+    feedback: str | None = None,
 ) -> tuple[str, float, int]:
     """Call the LLM and return (answer_text, cost_gbp, generation_latency_ms).
 
@@ -73,9 +82,11 @@ def generate_answer(
     tokens on repeated questions during development.
     """
     messages: list[dict[str, str]] = [
-        {"role": "system", "content": _SYSTEM_PROMPT},
+        {"role": "system", "content": _SYSTEM_PROMPTS[config.prompt_version]},
         {"role": "user", "content": _build_user_message(question, chunks)},
     ]
+    if feedback:
+        messages[1]["content"] += f"\n\n{feedback}"
 
     cache_key = _prompt_hash(config.llm_model, messages)
 

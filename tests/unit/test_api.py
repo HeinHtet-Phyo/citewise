@@ -11,6 +11,7 @@ from citewise.models import Answer
 
 def _make_answer(refused: bool = False) -> Answer:
     from citewise.models import Citation
+
     return Answer(
         question="Am I entitled to SSP?",
         answer="You are entitled to SSP at £109.40 per week [1]." if not refused else "",
@@ -23,7 +24,9 @@ def _make_answer(refused: bool = False) -> Answer:
                 snippet="Statutory Sick Pay (SSP) is paid at £109.40 per week.",
                 updated_at="2026-01-01",
             )
-        ] if not refused else [],
+        ]
+        if not refused
+        else [],
         refused=refused,
         refusal_reason="low_evidence" if refused else None,
         config_name="hybrid_400_rerank",
@@ -64,14 +67,18 @@ def test_ask_returns_answer(client: TestClient, monkeypatch: pytest.MonkeyPatch)
 
 
 def test_ask_refused_answer(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("citewise.api.main.answer_question", lambda q, c: _make_answer(refused=True))
+    monkeypatch.setattr(
+        "citewise.api.main.answer_question", lambda q, c: _make_answer(refused=True)
+    )
     res = client.post("/ask", json={"question": "What is the best pizza topping?"})
     assert res.status_code == 200
     assert res.json()["refused"] is True
 
 
 def test_ask_invalid_config(client: TestClient) -> None:
-    res = client.post("/ask", json={"question": "Am I entitled to SSP?", "config_name": "nonexistent"})
+    res = client.post(
+        "/ask", json={"question": "Am I entitled to SSP?", "config_name": "nonexistent"}
+    )
     assert res.status_code == 400
 
 

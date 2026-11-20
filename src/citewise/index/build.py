@@ -5,12 +5,13 @@ Creates (or recreates) a named collection with:
 - sparse vectors from BM25 (Qdrant/bm25)
 
 Payloads stored per point: chunk_id, url, title, section, format,
-updated_at, tokens, text.
+updated_at, tokens, text, position (document order, used for neighbour expansion).
 """
 
 from __future__ import annotations
 
 import logging
+import uuid
 from collections.abc import Iterator
 from typing import Any
 
@@ -91,6 +92,7 @@ def build_index(
     log.info("Loaded %d chunks from chunk_size=%d", len(chunks), chunk_size)
 
     total = 0
+    positions = {c.chunk_id: i for i, c in enumerate(chunks)}
     for batch in _batched(chunks, UPSERT_BATCH):
         texts = [c.text for c in batch]
         dense_vecs = embed_dense(texts)
@@ -112,6 +114,7 @@ def build_index(
                     "updated_at": chunk.updated_at,
                     "tokens": chunk.tokens,
                     "text": chunk.text,
+                    "position": positions[chunk.chunk_id],
                 },
             )
             for i, chunk in enumerate(batch)
@@ -124,9 +127,9 @@ def build_index(
     return total
 
 
-def _stable_id(chunk: Chunk) -> int:
-    """Derive a stable 32-bit integer point ID from chunk_id."""
-    return hash(chunk.chunk_id) & 0xFFFFFFFF
+def _stable_id(chunk: Chunk) -> str:
+    """Derive a deterministic UUID point ID from chunk_id (same on every build)."""
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, chunk.chunk_id))
 
 
 if __name__ == "__main__":

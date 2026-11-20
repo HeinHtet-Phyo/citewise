@@ -84,6 +84,22 @@ CONFIGS: dict[str, RagConfig] = {
 }
 
 
+def _variant(name: str, base: str, **overrides: object) -> RagConfig:
+    """Copy a named config and change some settings."""
+    cfg = RagConfig(**{**vars(CONFIGS[base]), "config_name": name, **overrides})
+    return cfg
+
+
+# Part 3 ladder: each config adds one fix on top of the one before it (tuned on dev only).
+CONFIGS["B_v2"] = _variant("B_v2", "hybrid_400_rerank", prompt_version="v2")
+CONFIGS["C_verify"] = _variant("C_verify", "B_v2", verify_claims=True)
+CONFIGS["D_s2b"] = _variant("D_s2b", "C_verify", expand_context=True)
+CONFIGS["E_k10"] = _variant("E_k10", "D_s2b", top_k_context=10)
+CONFIGS["L_dense"] = _variant(
+    "L_dense", "D_s2b", search_mode="dense", use_reranker=False, refusal_threshold=0.0
+)
+
+
 _CHUNK_MAPS: dict[int, dict[str, Chunk]] = {}
 
 
@@ -187,6 +203,8 @@ def run(split: str, config_name: str) -> None:
             row["question_id"] = q["question_id"]
             row["topic"] = q["topic"]
             row["context_urls"], row["context_texts"] = context_for_row(row, config)
+            if answer.context_texts:  # exact text the LLM saw (includes small-to-big expansion)
+                row["context_texts"] = answer.context_texts
             fh.write(json.dumps(row) + "\n")
 
     if errors:

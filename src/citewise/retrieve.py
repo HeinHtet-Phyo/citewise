@@ -16,8 +16,11 @@ from dataclasses import dataclass
 from fastembed.rerank.cross_encoder import TextCrossEncoder
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
+    FieldCondition,
+    Filter,
     Fusion,
     FusionQuery,
+    MatchValue,
     NearestQuery,
     Prefetch,
     ScoredPoint,
@@ -59,6 +62,8 @@ class RetrievedChunk:
 
     chunk: Chunk
     score: float
+    position: int | None = None
+    expanded_text: str | None = None
 
 
 def _points_to_chunks(points: list[ScoredPoint]) -> list[RetrievedChunk]:
@@ -76,7 +81,7 @@ def _points_to_chunks(points: list[ScoredPoint]) -> list[RetrievedChunk]:
             updated_at=payload["updated_at"],
             tokens=payload["tokens"],
         )
-        result.append(RetrievedChunk(chunk=chunk, score=pt.score))
+        result.append(RetrievedChunk(chunk=chunk, score=pt.score, position=payload.get("position")))
     return result
 
 
@@ -96,6 +101,50 @@ def _dedup_by_url(chunks: list[RetrievedChunk], top_k: int) -> list[RetrievedChu
         if len(deduped) >= top_k:
             break
     return deduped
+
+
+def build_expanded_text(own: int, siblings: list[tuple[int, str, int]], budget: int) -> str:
+    """Join the chunk at position `own` with its neighbours (small-to-big) within a token budget.
+
+    `siblings` is (position, text, tokens) for every chunk on the same page. Neighbours are added
+    one at a time, next then previous, only while the running token total stays within budget.
+    """
+    by_pos = {pos: (text, tokens) for pos, text, tokens in siblings}
+    chosen = [own]
+    used = by_pos[own][1]
+    for step in range(1, len(siblings)):
+        added = False
+        for pos in (own + step, own - step):
+            if pos in by_pos and used + by_pos[pos][1] <= budget:
+                chosen.append(pos)
+                used += by_pos[pos][1]
+                added = True
+        if not added:
+            break
+    return "\n\n".join(by_pos[pos][0] for pos in sorted(chosen))
+
+
+def _expand_context(results: list[RetrievedChunk], budget: int, collection: str) -> None:
+    """Fill expanded_text for each result using its neighbouring chunks from the same page."""
+    client = _get_client()
+    for rc in results:
+        if rc.position is None:
+            continue
+        points, _ = client.scroll(
+            collection_name=collection,
+            scroll_filter=Filter(
+                must=[FieldCondition(key="url", match=MatchValue(value=rc.chunk.url))]
+            ),
+            limit=100,
+            with_payload=True,
+        )
+        siblings = [
+            (p.payload["position"], p.payload["text"], p.payload["tokens"])
+            for p in points
+            if p.payload and p.payload.get("position") is not None
+        ]
+        if any(pos == rc.position for pos, _, _ in siblings):
+            rc.expanded_text = build_expanded_text(rc.position, siblings, budget)
 
 
 def retrieve(query: str, config: RagConfig) -> list[RetrievedChunk]:
@@ -154,4 +203,7 @@ def retrieve(query: str, config: RagConfig) -> list[RetrievedChunk]:
         candidates.sort(key=lambda rc: rc.score, reverse=True)
         log.debug("Reranked %d candidates", len(candidates))
 
-    return _dedup_by_url(candidates, config.top_k_context)
+    results = _dedup_by_url(candidates, config.top_k_context)
+    if config.expand_context:
+        _expand_context(results, config.context_token_budget, config.collection_name)
+    return results

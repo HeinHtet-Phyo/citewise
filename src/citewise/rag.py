@@ -10,8 +10,8 @@ import time
 import uuid
 
 from citewise.config import RagConfig
-from citewise.generate import generate_answer
-from citewise.guardrails import check_evidence, check_input
+from citewise.generate import context_text, generate_answer
+from citewise.guardrails import check_evidence, check_input, drop_sentences, verify_claims
 from citewise.models import Answer, Citation
 from citewise.retrieve import RetrievedChunk, retrieve
 
@@ -61,6 +61,33 @@ def _refused_answer(
     )
 
 
+def _verify_and_repair(
+    question: str, answer_text: str, chunks: list[RetrievedChunk], config: RagConfig
+) -> tuple[str, float, str]:
+    """Check the answer; regenerate once with feedback; then drop unsupported sentences."""
+    sources = [context_text(rc) for rc in chunks]
+    unsupported, cost = verify_claims(answer_text, sources)
+    if not unsupported:
+        return answer_text, cost, "passed"
+    feedback = (
+        "Your previous answer contained sentences the sources do not support:\n"
+        + "\n".join(f"- {s}" for s in unsupported)
+        + "\nWrite the answer again using only facts stated in the sources."
+    )
+    retry_text, retry_cost, _ = generate_answer(question, chunks, config, feedback)
+    cost += retry_cost
+    if retry_text.strip().startswith(_REFUSAL_PREFIX):
+        return retry_text, cost, "refused"
+    unsupported, verify_cost = verify_claims(retry_text, sources)
+    cost += verify_cost
+    if not unsupported:
+        return retry_text, cost, "repaired"
+    kept = drop_sentences(retry_text, unsupported)
+    if not kept:
+        return "", cost, "refused"
+    return kept, cost, "dropped"
+
+
 def answer_question(question: str, config: RagConfig) -> Answer:
     """Run the full RAG pipeline and return a structured Answer.
 
@@ -105,6 +132,16 @@ def answer_question(question: str, config: RagConfig) -> Answer:
     refused = answer_text.strip().startswith(_REFUSAL_PREFIX)
     refusal_reason_out: str | None = "low_evidence" if refused else None
 
+    # 5b. Verify claims against the sources; repair once, then drop what is still unsupported
+    verifier_path: str | None = None
+    if config.verify_claims and not refused:
+        answer_text, extra_cost, verifier_path = _verify_and_repair(
+            question, answer_text, chunks, config
+        )
+        cost_gbp += extra_cost
+        if verifier_path == "refused":
+            refused, refusal_reason_out = True, "unsupported_claims"
+
     latency_ms = int((time.monotonic() - t0) * 1000)
     citations = _build_citations(chunks) if not refused else []
 
@@ -119,4 +156,6 @@ def answer_question(question: str, config: RagConfig) -> Answer:
         cost_gbp=cost_gbp,
         retrieved_chunk_ids=[rc.chunk.chunk_id for rc in chunks],
         trace_id=trace_id,
+        verifier_path=verifier_path,
+        context_texts=[context_text(rc) for rc in chunks],
     )

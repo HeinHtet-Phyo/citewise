@@ -15,6 +15,11 @@ pages. Every claim carries a numbered citation to a live GOV.UK page, and the sy
 the evidence is weak. The focus of the project is **measuring** a RAG system honestly, not just
 building one.
 
+![Answer with cited sources, desktop](images/ui_answer_desktop.png)
+![Refusal, phone size](images/ui_refusal_phone.png)
+
+Checked in a real browser (Playwright, `scripts/ui_check.py`) at desktop and phone size: the answer lists only the cited sources, "Other pages searched" expands, and a refusal shows a clear notice.
+
 ## Results (held-out test split, 128 questions)
 
 All figures come from `eval/results/summary_test.json`; denominators are in `summary.md`.
@@ -150,7 +155,7 @@ with root causes, for example:
 
 ## Engineering
 
-- 111 tests (unit and integration), `ruff`, `mypy --strict`, run in GitHub Actions on every push.
+- 112 tests (unit and integration), `ruff`, `mypy --strict`, run in GitHub Actions on every push.
 - An optional smoke-eval CI job runs only when a `NEBIUS_API_KEY` repository secret is set.
 - Rate limit (10 per minute per client, keyed on `X-Forwarded-For` behind Render's proxy) and a daily spend cap that returns HTTP 503 when exhausted.
 - Embedding and reranker models are baked into the Docker image so there is no download at start-up.

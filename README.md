@@ -62,6 +62,7 @@ re-pick the config on test results.
 - **Small samples.** Dev has 62 questions (47 answerable) and test has 128 (98 answerable); expect
   differences of a few points to be noise. No confidence intervals yet.
 - **The fixes are not shown to help on test.** See above.
+- **Live behaviour:** some answerable questions are refused (for example State Pension age and tenancy notice periods in my spot checks), in line with the 7.1% test false-refusal rate. The API lists every retrieved source as a citation, not only the ones the answer uses.
 - **Live-service limits are in memory:** the rate limiter (10 per minute) and the daily spend cap
   (£0.50) reset on restart.
 
@@ -101,7 +102,7 @@ chunked into 21,740 chunks of up to 400 tokens, under the
 
 ## Failure analysis
 
-[`docs/failure_analysis.md`](docs/failure_analysis.md) annotates 17 real cases from the test split
+[`docs/failure_analysis.md`](docs/failure_analysis.md) annotates 16 real cases (some cover several questions) from the test split
 with root causes, for example:
 
 - `q160`: the baseline applied a 6-month rule from a neighbouring page; the verifier removed it.
@@ -122,8 +123,7 @@ with root causes, for example:
 - Deterministic Qdrant point IDs (`uuid5` of the chunk id) so re-indexing never duplicates.
 - LLM responses are cached on disk during development; cost per answer is tracked.
 
-Spend: generation in the logged runs was about £0.0004 to £0.0006 per answer (see the summary
-tables). Total project spend across judge and checks is not metered [TBC].
+Spend: the headline configs cost about £0.0004 to £0.0006 per answer (the larger-context dev experiments up to £0.0015). Generation and verification in the logged runs came to about £0.41 (`docs/eval_method.md`) and building the questions about $0.10 (`eval/questions/verification_report.json`); judge and AI-check calls are not metered [TBC].
 
 ## Project structure
 

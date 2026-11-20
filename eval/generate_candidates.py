@@ -98,6 +98,8 @@ CONFIGS["E_k10"] = _variant("E_k10", "D_s2b", top_k_context=10)
 CONFIGS["L_dense"] = _variant(
     "L_dense", "C_verify", search_mode="dense", use_reranker=False, refusal_threshold=0.0
 )
+# Refusal fix: partial-answer prompt (v3) and no verifier flags on "guidance does not cover" lines.
+CONFIGS["L2_dense"] = _variant("L2_dense", "L_dense", prompt_version="v3")
 
 
 _CHUNK_MAPS: dict[int, dict[str, Chunk]] = {}

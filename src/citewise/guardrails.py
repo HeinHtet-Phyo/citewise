@@ -66,6 +66,16 @@ def split_sentences(text: str) -> list[str]:
     return [s.strip() for s in _SENTENCE_RE.split(text) if s.strip()]
 
 
+_LIMITATION_RE = re.compile(
+    r"\b(guidance|sources?|information)\b[^.]*\b(not|no|only)\b|^I cannot find", re.IGNORECASE
+)
+
+
+def is_limitation(sentence: str) -> bool:
+    """True for sentences that only say what the guidance does not cover (never a claim)."""
+    return bool(_LIMITATION_RE.search(sentence))
+
+
 def _parse_unsupported(text: str, n_sentences: int) -> list[int]:
     """Read the 1-based sentence numbers from the verifier's JSON; empty list if unreadable."""
     start = text.find("{")
@@ -123,7 +133,7 @@ def verify_claims(answer: str, sources: list[str]) -> tuple[list[str], float]:
             Path(settings.llm_cache_dir).mkdir(parents=True, exist_ok=True)
             path.write_text(json.dumps({"text": text}), encoding="utf-8")
     flagged = _parse_unsupported(text, len(sentences))
-    return [sentences[n - 1] for n in flagged], cost
+    return [sentences[n - 1] for n in flagged if not is_limitation(sentences[n - 1])], cost
 
 
 def drop_sentences(answer: str, unsupported: list[str]) -> str:

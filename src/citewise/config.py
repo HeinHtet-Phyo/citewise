@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     hf_token: str = Field(default="", alias="HF_TOKEN")
 
     # Public demo
-    default_config: str = Field(default="L_dense", alias="CITEWISE_CONFIG")
+    default_config: str = Field(default="L2_dense", alias="CITEWISE_CONFIG")
     daily_budget_gbp: float = Field(default=0.50, alias="DAILY_BUDGET_GBP")
     rate_limit_per_minute: int = Field(default=10, alias="RATE_LIMIT_PER_MINUTE")
 
@@ -78,7 +78,7 @@ class RagConfig:
         llm_model: str = "openai/Qwen/Qwen3-235B-A22B-Instruct-2507",
         temperature: float = 0.0,
         max_tokens: int = 1024,
-        prompt_version: str = "v1",  # "v1" | "v2"
+        prompt_version: str = "v1",  # "v1" | "v2" | "v3"
         verify_claims: bool = False,
         expand_context: bool = False,
         context_token_budget: int = 900,

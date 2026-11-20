@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 RESULTS = Path(__file__).parent / "results"
 IMAGES = Path(__file__).parent.parent / "images"
-ORDER = ["dense_400", "hybrid_400_rerank", "B_v2", "C_verify", "D_s2b", "E_k10", "L_dense"]
+ORDER = ["dense_400", "hybrid_400_rerank", "B_v2", "C_verify", "D_s2b", "E_k10", "L_dense", "L2_dense"]
 
 
 def _load(split: str) -> dict[str, dict]:

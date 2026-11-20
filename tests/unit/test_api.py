@@ -103,3 +103,15 @@ def test_daily_budget_blocks_after_cap() -> None:
     assert not budget.exhausted()
     budget.add(0.0006)
     assert budget.exhausted()
+
+
+def test_rate_limit_uses_forwarded_address() -> None:
+    from starlette.requests import Request
+
+    from citewise.api.main import _client_ip
+
+    def make(headers: list[tuple[bytes, bytes]]) -> Request:
+        return Request({"type": "http", "headers": headers, "client": ("10.0.0.1", 1)})
+
+    assert _client_ip(make([(b"x-forwarded-for", b"203.0.113.7, 10.1.1.1")])) == "203.0.113.7"
+    assert _client_ip(make([])) == "10.0.0.1"

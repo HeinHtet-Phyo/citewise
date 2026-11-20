@@ -50,9 +50,17 @@ def _read_git_sha() -> str:
 _GIT_SHA: str = _read_git_sha()
 
 
+def _client_ip(request: Request) -> str:
+    """Caller address: first X-Forwarded-For entry behind Render's proxy, else the socket peer."""
+    forwarded = request.headers.get("x-forwarded-for", "")
+    if forwarded.strip():
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
 async def _rate_limit(request: Request) -> None:
     """Raise 429 if the caller exceeds the per-minute request limit."""
-    ip = request.client.host if request.client else "unknown"
+    ip = _client_ip(request)
     now = time()
     _rate_buckets[ip] = [t for t in _rate_buckets[ip] if now - t < _RATE_WINDOW]
     if len(_rate_buckets[ip]) >= _RATE_LIMIT:
@@ -80,7 +88,7 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 
-# Named configs. dense_400 is the unfixed baseline; L_dense adds answer_v2 and the claim verifier.
+# Named configs. dense_400 is the unfixed baseline; L_dense adds answer_v2 and the claim verifier; L2_dense uses answer_v3 (partial answers).
 _CONFIGS: dict[str, RagConfig] = {
     "hybrid_400_rerank": RagConfig(
         config_name="hybrid_400_rerank",
@@ -94,6 +102,13 @@ _CONFIGS: dict[str, RagConfig] = {
         search_mode="dense",
         use_reranker=False,
         prompt_version="v2",
+        verify_claims=True,
+    ),
+    "L2_dense": RagConfig(
+        config_name="L2_dense",
+        search_mode="dense",
+        use_reranker=False,
+        prompt_version="v3",
         verify_claims=True,
     ),
 }

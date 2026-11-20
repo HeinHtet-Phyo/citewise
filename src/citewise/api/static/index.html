@@ -119,6 +119,8 @@
       flex-wrap: wrap;
     }
 
+    .other-pages { margin-top: 12px; }
+    .other-pages summary { cursor: pointer; color: #505a5f; font-weight: bold; margin-bottom: 8px; }
     .citations-heading {
       font-size: 14px;
       font-weight: bold;
@@ -419,14 +421,19 @@
       (_, n) => `<a href="#cite-${n}" style="color:#1d70b8;text-decoration:none;font-weight:bold">[${n}]</a>`
     );
 
+    const markers = new Set([...data.answer.matchAll(/\[(\d+)\]/g)].map(m => Number(m[1])));
+    const cited = data.citations.filter(c => markers.has(c.n));
+    const citedList = cited.length > 0 ? cited : data.citations;
+    const otherList = cited.length > 0 ? data.citations.filter(c => !markers.has(c.n)) : [];
+
     const metaHtml = `
       <div class="meta">
         <span>&#8987; ${data.latency_ms} ms</span>
-        <span>&#128196; ${data.citations.length} source${data.citations.length !== 1 ? "s" : ""}</span>
+        <span>&#128196; ${citedList.length} source${citedList.length !== 1 ? "s" : ""} cited</span>
         <span>&#163;${data.cost_gbp.toFixed(5)} generation cost</span>
       </div>`;
 
-    const citationsHtml = data.citations.map(c => `
+    const renderCitation = c => `
       <div class="citation" id="cite-${c.n}">
         <div class="citation-header">
           <span class="citation-n">${c.n}</span>
@@ -440,14 +447,18 @@
           View on GOV.UK &#8599;
         </a>
         <div class="citation-updated">Last updated: ${escHtml(c.updated_at)}</div>
-      </div>`).join("");
+      </div>`;
+    const citationsHtml = citedList.map(renderCitation).join("");
+    const otherHtml = otherList.length > 0
+      ? `<details class="other-pages"><summary>Other pages searched (${otherList.length})</summary>${otherList.map(renderCitation).join("")}</details>`
+      : "";
 
     resultDiv.innerHTML = `
       <div class="answer-card">
         <div class="answer-text">${answerHtml}</div>
         ${metaHtml}
       </div>
-      ${data.citations.length > 0 ? `<div class="citations-heading">Sources</div>${citationsHtml}` : ""}`;
+      ${data.citations.length > 0 ? `<div class="citations-heading">Sources</div>${citationsHtml}${otherHtml}` : ""}`;
   }
 
   function escHtml(str) {

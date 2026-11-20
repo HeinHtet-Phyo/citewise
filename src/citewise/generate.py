@@ -21,6 +21,7 @@ _PROMPTS_DIR = Path(__file__).parent / "prompts"
 _SYSTEM_PROMPTS = {
     "v1": (_PROMPTS_DIR / "answer_system.txt").read_text(encoding="utf-8").strip(),
     "v2": (_PROMPTS_DIR / "answer_v2.txt").read_text(encoding="utf-8").strip(),
+    "v3": (_PROMPTS_DIR / "answer_v3.txt").read_text(encoding="utf-8").strip(),
 }
 
 # Approximate USD → GBP conversion used for cost estimates.

@@ -76,4 +76,4 @@ def test_hand_check_csv() -> None:
     with (QDIR / "hand_check_questions.csv").open(encoding="utf-8") as fh:
         rows = list(csv.DictReader(fh))
     assert len(rows) == 30
-    assert list(rows[0]) == ["question_id", "question", "reference_answer", "gold_url", "human_ok"]
+    assert list(rows[0])[-2:] == ["ai_check", "ai_check_reason"]

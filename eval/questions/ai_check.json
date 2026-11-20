@@ -1,0 +1,752 @@
+{
+  "q002": {
+    "question_id": "q002",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q010": {
+    "question_id": "q010",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q016": {
+    "question_id": "q016",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q022": {
+    "question_id": "q022",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q024": {
+    "question_id": "q024",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q037": {
+    "question_id": "q037",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q041": {
+    "question_id": "q041",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q044": {
+    "question_id": "q044",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q046": {
+    "question_id": "q046",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q049": {
+    "question_id": "q049",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q054": {
+    "question_id": "q054",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q064": {
+    "question_id": "q064",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q072": {
+    "question_id": "q072",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q073": {
+    "question_id": "q073",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q075": {
+    "question_id": "q075",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q077": {
+    "question_id": "q077",
+    "ai_check": "fail",
+    "reason": "model: not supported; model: does not answer the question (The text discusses offences landlords can commit that *could* lead to a Rent Repayment Order, but does not directly address whether a landlord can enter a property without permission.)"
+  },
+  "q090": {
+    "question_id": "q090",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q095": {
+    "question_id": "q095",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q100": {
+    "question_id": "q100",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q104": {
+    "question_id": "q104",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q110": {
+    "question_id": "q110",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q130": {
+    "question_id": "q130",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q134": {
+    "question_id": "q134",
+    "ai_check": "fail",
+    "reason": "figures not in page: 450000 (The page text confirms all details in the reference answer and directly addresses both parts of the question.)"
+  },
+  "q137": {
+    "question_id": "q137",
+    "ai_check": "fail",
+    "reason": "model: not supported; model: does not answer the question (The text details Rent Repayment Orders but does not directly state whether a tenant is entitled to one if their landlord has no license; it only discusses offences related to licensing.)"
+  },
+  "q144": {
+    "question_id": "q144",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q155": {
+    "question_id": "q155",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q156": {
+    "question_id": "q156",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q161": {
+    "question_id": "q161",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q162": {
+    "question_id": "q162",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q163": {
+    "question_id": "q163",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q164": {
+    "question_id": "q164",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q165": {
+    "question_id": "q165",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q166": {
+    "question_id": "q166",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q168": {
+    "question_id": "q168",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q177": {
+    "question_id": "q177",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q178": {
+    "question_id": "q178",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q179": {
+    "question_id": "q179",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q180": {
+    "question_id": "q180",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q181": {
+    "question_id": "q181",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q182": {
+    "question_id": "q182",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q184": {
+    "question_id": "q184",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q186": {
+    "question_id": "q186",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q188": {
+    "question_id": "q188",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q192": {
+    "question_id": "q192",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q194": {
+    "question_id": "q194",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q195": {
+    "question_id": "q195",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q201": {
+    "question_id": "q201",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q203": {
+    "question_id": "q203",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q205": {
+    "question_id": "q205",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q206": {
+    "question_id": "q206",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q004": {
+    "question_id": "q004",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q005": {
+    "question_id": "q005",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q006": {
+    "question_id": "q006",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q009": {
+    "question_id": "q009",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q013": {
+    "question_id": "q013",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q014": {
+    "question_id": "q014",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q015": {
+    "question_id": "q015",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q019": {
+    "question_id": "q019",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q025": {
+    "question_id": "q025",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q027": {
+    "question_id": "q027",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q030": {
+    "question_id": "q030",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q032": {
+    "question_id": "q032",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q034": {
+    "question_id": "q034",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q035": {
+    "question_id": "q035",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q039": {
+    "question_id": "q039",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q043": {
+    "question_id": "q043",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q048": {
+    "question_id": "q048",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q050": {
+    "question_id": "q050",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q057": {
+    "question_id": "q057",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q061": {
+    "question_id": "q061",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q063": {
+    "question_id": "q063",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q065": {
+    "question_id": "q065",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q067": {
+    "question_id": "q067",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q068": {
+    "question_id": "q068",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q071": {
+    "question_id": "q071",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q074": {
+    "question_id": "q074",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q078": {
+    "question_id": "q078",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q079": {
+    "question_id": "q079",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q084": {
+    "question_id": "q084",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q085": {
+    "question_id": "q085",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q087": {
+    "question_id": "q087",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q088": {
+    "question_id": "q088",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q092": {
+    "question_id": "q092",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q093": {
+    "question_id": "q093",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q094": {
+    "question_id": "q094",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q096": {
+    "question_id": "q096",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q098": {
+    "question_id": "q098",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q106": {
+    "question_id": "q106",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q108": {
+    "question_id": "q108",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q109": {
+    "question_id": "q109",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q119": {
+    "question_id": "q119",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q120": {
+    "question_id": "q120",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q121": {
+    "question_id": "q121",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q122": {
+    "question_id": "q122",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q123": {
+    "question_id": "q123",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q124": {
+    "question_id": "q124",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q125": {
+    "question_id": "q125",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q126": {
+    "question_id": "q126",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q127": {
+    "question_id": "q127",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q128": {
+    "question_id": "q128",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q129": {
+    "question_id": "q129",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q131": {
+    "question_id": "q131",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q132": {
+    "question_id": "q132",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q133": {
+    "question_id": "q133",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q135": {
+    "question_id": "q135",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q136": {
+    "question_id": "q136",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q138": {
+    "question_id": "q138",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q142": {
+    "question_id": "q142",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q146": {
+    "question_id": "q146",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q148": {
+    "question_id": "q148",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q149": {
+    "question_id": "q149",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q151": {
+    "question_id": "q151",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q152": {
+    "question_id": "q152",
+    "ai_check": "fail",
+    "reason": "model: not supported (The text states someone born 6 October 1941 to 5 October 1943 can inherit 70%, and 6 October 1943 to 5 October 1945 can inherit 60%, but not 80% as stated in the answer.)"
+  },
+  "q153": {
+    "question_id": "q153",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q154": {
+    "question_id": "q154",
+    "ai_check": "fail",
+    "reason": "model: not supported; model: does not answer the question (The text details bankruptcy processes and its impact on property registration, but does not directly state what happens to a person's ability to act as a director if they are declared bankrupt.)"
+  },
+  "q157": {
+    "question_id": "q157",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q158": {
+    "question_id": "q158",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q159": {
+    "question_id": "q159",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q160": {
+    "question_id": "q160",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q167": {
+    "question_id": "q167",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q169": {
+    "question_id": "q169",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q170": {
+    "question_id": "q170",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q171": {
+    "question_id": "q171",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q172": {
+    "question_id": "q172",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q173": {
+    "question_id": "q173",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q174": {
+    "question_id": "q174",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q175": {
+    "question_id": "q175",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q176": {
+    "question_id": "q176",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q183": {
+    "question_id": "q183",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q185": {
+    "question_id": "q185",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q187": {
+    "question_id": "q187",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q189": {
+    "question_id": "q189",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q190": {
+    "question_id": "q190",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q191": {
+    "question_id": "q191",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q193": {
+    "question_id": "q193",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q196": {
+    "question_id": "q196",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q197": {
+    "question_id": "q197",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q198": {
+    "question_id": "q198",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q199": {
+    "question_id": "q199",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q200": {
+    "question_id": "q200",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q202": {
+    "question_id": "q202",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q204": {
+    "question_id": "q204",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q207": {
+    "question_id": "q207",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q208": {
+    "question_id": "q208",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q209": {
+    "question_id": "q209",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q210": {
+    "question_id": "q210",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q211": {
+    "question_id": "q211",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q212": {
+    "question_id": "q212",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q213": {
+    "question_id": "q213",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  },
+  "q214": {
+    "question_id": "q214",
+    "ai_check": "pass",
+    "reason": "figures found in page; model agrees"
+  }
+}

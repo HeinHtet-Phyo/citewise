@@ -1,6 +1,6 @@
 # Evaluation questions
 
-195 questions with ground truth, built by `eval/build_questions.py`
+190 questions with ground truth, built by `eval/build_questions.py`
 (seed 20261119). Schema: `eval/question_schema.py`.
 
 ## How they were made
@@ -19,7 +19,16 @@
    (`build_questions_refusals.py`), each with a note giving the reason for refusal.
 5. Questions were split into dev and test, stratified by type and topic, with the fixed seed.
 
-Dropped by verification:
+### AI check (no human validation)
+
+`eval/ai_check.py` re-checks every answerable reference answer against the gold page text: a programmatic
+check that every number in the answer appears in the page, plus a third-family model
+(`google/gemma-3-27b-it`, neither the Qwen generator nor the DeepSeek judge) that reads the page and
+says whether the answer is supported and answers the question. 145 of 150 passed. The 5 that
+failed (q077, q134, q137, q152, q154) were dropped, not repaired; some may have been false alarms,
+but dropping is the cautious choice. Results and reasons are in `ai_check.json`.
+
+Dropped by verification (before the AI check):
 
 - `existing:model_says_not_answerable`: 22
 - `existing:number_not_in_page`: 3
@@ -36,24 +45,24 @@ Dropped by verification:
 ### By split
 | Group | Questions |
 |---|---|
-| dev | 65 |
-| test | 130 |
+| dev | 62 |
+| test | 128 |
 
 ### By type
 | Group | Questions |
 |---|---|
 | adversarial | 15 |
 | how_to | 15 |
-| multi_page | 30 |
-| single_fact | 105 |
+| multi_page | 29 |
+| single_fact | 101 |
 | unanswerable | 30 |
 
 ### By topic
 | Group | Questions |
 |---|---|
-| benefits | 66 |
-| employment | 47 |
-| housing | 39 |
+| benefits | 65 |
+| employment | 46 |
+| housing | 36 |
 | transport | 43 |
 
 ### Split by type
@@ -62,12 +71,12 @@ Dropped by verification:
 | dev/adversarial | 5 |
 | dev/how_to | 5 |
 | dev/multi_page | 10 |
-| dev/single_fact | 35 |
+| dev/single_fact | 32 |
 | dev/unanswerable | 10 |
 | test/adversarial | 10 |
 | test/how_to | 10 |
-| test/multi_page | 20 |
-| test/single_fact | 70 |
+| test/multi_page | 19 |
+| test/single_fact | 69 |
 | test/unanswerable | 20 |
 
 ### Split by topic
@@ -94,6 +103,8 @@ numbers from a single test run. Never choose anything based on test results.
 - Gold URLs list the page(s) the evidence was taken from; other pages may also answer the question.
 - The "unanswerable" questions were chosen by hand and only
   spot-checked against the corpus.
-- A sample of 30 answerable questions is in `hand_check_questions.csv` for the owner to review
-  (`human_ok` is empty until that is done; agreement is [TBC]).
+- **No human has validated this ground truth.** It was machine-verified against the source pages and
+  cross-checked by a second model (the AI check above). `hand_check_questions.csv` holds 30 sampled
+  answerable questions with the `ai_check` result and a reason for each. A human review would be
+  the natural next step.
 - Nebius spend for this build: $0.1028 over 266 calls (first, uncached run; reruns use the cache).

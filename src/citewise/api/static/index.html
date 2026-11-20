@@ -319,19 +319,18 @@
         <span class="step">Your question</span>
         <span class="step">Dense vector search</span>
         <span class="step">Qwen3-235B via Nebius</span>
+        <span class="step">Claim check</span>
         <span class="step">Answer with [n] citations</span>
       </div>
       <p>Corpus: 3,313 GOV.UK pages (21,740 chunks). Topics: benefits, employment, housing, transport.</p>
-      <p style="margin-top:8px">Dev-split evaluation (100 questions, LLM-as-judge 0–3 scale):</p>
+      <p style="margin-top:8px">Held-out test split (128 questions, LLM judge):</p>
       <table>
-        <tr><th>Config</th><th>Faithfulness</th><th>Relevance</th><th>Citation</th><th>Composite</th></tr>
-        <tr class="best"><td><strong>dense_400 (live demo) ✓</strong></td><td>1.26</td><td>2.70</td><td>1.36</td><td>1.77</td></tr>
-        <tr><td>hybrid_400</td><td>1.11</td><td>2.70</td><td>1.23</td><td>1.68</td></tr>
-        <tr><td>hybrid_400_rerank</td><td>1.25</td><td>2.67</td><td>1.42</td><td>1.78</td></tr>
-        <tr><td>hybrid_800</td><td>1.05</td><td>2.80</td><td>1.15</td><td>1.67</td></tr>
-        <tr><td>hybrid_800_rerank</td><td>1.02</td><td>2.76</td><td>1.10</td><td>1.63</td></tr>
+        <tr><th>Config</th><th>Correct</th><th>Made-up</th><th>Refusal recall</th></tr>
+        <tr class="best"><td><strong>L_dense (live demo) ✓</strong></td><td>69.4%</td><td>6.5%</td><td>93.3%</td></tr>
+        <tr><td>dense_400</td><td>69.4%</td><td>8.3%</td><td>93.3%</td></tr>
+        <tr><td>hybrid_400_rerank</td><td>73.5%</td><td>20.0%</td><td>96.7%</td></tr>
       </table>
-      <p style="margin-top:8px">The live demo runs dense_400 (dev composite 1.77) to fit free-tier memory. Test-split (50 questions, one-shot) for hybrid_400_rerank: composite <strong>1.69</strong>.
+      <p style="margin-top:8px">The live demo runs dense retrieval plus a claim verifier to fit free-tier memory. Ground truth was machine-verified and cross-checked by a second model; no human validated it.
       Generator: <a href="https://huggingface.co/Qwen/Qwen3-235B-A22B-Instruct-2507" target="_blank" rel="noopener" style="color:#1d70b8">Qwen3-235B-A22B</a> via Nebius.
       Judge: DeepSeek-V4.1-Flash (different family — reduces self-preference bias).
       Source: <a href="https://github.com/HeinHtet-Phyo/citewise" target="_blank" rel="noopener" style="color:#1d70b8">github.com/HeinHtet-Phyo/citewise</a>.</p>

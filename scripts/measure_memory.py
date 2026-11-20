@@ -62,15 +62,20 @@ def measure(config: str) -> dict[str, float]:
     time.sleep(10)
     idle = _mem_mib(name)
     peak = idle
-    for q in _questions():
+    first_request_s = 0.0
+    for i, q in enumerate(_questions()):
+        started = time.monotonic()
         httpx.post(
             f"http://localhost:{PORT}/ask", json={"question": q}, timeout=120
         ).raise_for_status()
+        if i == 0:
+            first_request_s = time.monotonic() - started
         peak = max(peak, _mem_mib(name))
     after = _mem_mib(name)
     subprocess.run(["docker", "rm", "-f", name], capture_output=True)
     return {
         "cold_start_to_health_s": round(cold_start_s, 1),
+        "first_request_s": round(first_request_s, 1),
         "idle_mib": round(idle, 1),
         "peak_mib_during_10_requests": round(peak, 1),
         "after_10_requests_mib": round(after, 1),

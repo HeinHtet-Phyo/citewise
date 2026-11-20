@@ -65,3 +65,11 @@ The 400- and 800-token sizes produce meaningfully different chunks (282 vs 486 a
 ## Refresh
 
 `src/citewise/ingest/refresh.py` compares the `public_timestamp` field in the manifest against what is stored in `data/raw/`. Pages whose timestamp has changed, or which are not cached at all, are re-fetched. This means re-running `make ingest` after a manifest update is safe and incremental.
+
+## Evaluation questions
+
+190 questions (62 dev, 128 test) built by `eval/build_questions.py` and re-checked by `eval/ai_check.py`. Ground truth is machine-verified against the source pages and cross-checked by a second model; **no human validated it**. Details: `eval/questions/README.md` and `docs/eval_method.md`.
+
+## Index note
+
+`citewise_400` holds 21,739 points for 21,740 chunks: two chunks share a `chunk_id`, so the deterministic point ID (UUID5 of `chunk_id`) overwrites one of them. Point IDs were previously derived from Python's randomised `hash()`, which created duplicates when the index was rebuilt; that is fixed.

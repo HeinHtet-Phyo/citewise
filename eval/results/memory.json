@@ -1,9 +1,10 @@
 {
   "L_dense": {
-    "cold_start_to_health_s": 2.2,
-    "idle_mib": 245.9,
-    "peak_mib_during_10_requests": 373.0,
-    "after_10_requests_mib": 373.0
+    "cold_start_to_health_s": 2.9,
+    "first_request_s": 2.2,
+    "idle_mib": 245.1,
+    "peak_mib_during_10_requests": 375.0,
+    "after_10_requests_mib": 375.0
   },
   "hybrid_400_rerank": {
     "cold_start_to_health_s": 1.7,

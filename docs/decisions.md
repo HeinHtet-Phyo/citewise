@@ -147,6 +147,8 @@ cost from `response.usage` token counts.
 
 ## ADR-005 — LLM-as-judge evaluation methodology
 
+> **Superseded (20 November 2026):** the 0-3 scoring scale and the 150-question set described here were replaced by a percentage-based judge and a rebuilt 190-question set with ground truth. See `docs/eval_method.md`. The text below is kept as history.
+
 **Date:** 19 November 2026  
 **Status:** Implemented
 
@@ -192,6 +194,8 @@ cancel out across configs.
 
 ## ADR-006 — Refusal via evidence threshold
 
+> **Status:** the 0.30 threshold for `hybrid_400_rerank` was re-checked on the rebuilt dev set (`eval/results/threshold_hybrid_400_rerank.json`) and still holds. Older figures below use the previous question set.
+
 **Date:** 19 November 2026  
 **Status:** Implemented (threshold = 0.0 pending dev-split tuning)
 
@@ -212,3 +216,48 @@ values from 0.00 to 1.00 in steps of 0.05. Results written to
 the corpus scope; the threshold's main value is protecting against out-of-corpus production queries.
 
 As a secondary safeguard, if the LLM itself returns the phrase "I cannot find sufficient information…" (from the system prompt instruction), the answer is marked as refused post-hoc.
+
+
+## ADR-007 — Parametric leakage: prompt, claim verifier, small-to-big context
+
+**Date:** 20 November 2026  
+**Status:** Implemented; benefit not established
+
+### Context
+
+Early answers sometimes stated figures from the model's own memory and cited a chunk that did not contain them ("parametric leakage"). The judge's made-up rate measures this.
+
+### Decision
+
+Add three fixes and measure each on dev as a ladder (`eval/generate_candidates.py`):
+
+- B: `answer_v2` prompt (figures only if written in the sources).
+- C: B plus a claim verifier (`guardrails.verify_claims`): a small model checks each sentence, the answer is regenerated once with feedback, still-unsupported sentences are dropped, and if nothing is left the answer is refused.
+- D: C plus small-to-big context (neighbouring chunks from the same page, within a token budget).
+- E: D with 10 context chunks instead of 6.
+
+### Results (dev, 47 answerable questions; see `eval/results/summary.md`)
+
+Made-up rate: A 6.5%, B 11.1%, C 4.5%, D 7.0%, E 4.8%. Correct (of answerable): A 80.9%, B 76.1%, C 70.2%, D 63.8%, E 66.0%. False refusals rose from 2.1% (A) to 6.4% (C), 8.5% (D) and 10.6% (E).
+
+### Consequences
+
+- The fixes bought a small made-up reduction (one or two answers) at a clear cost in correctness and false refusals, so small-to-big and k=10 were not adopted.
+- On the test split the baseline's made-up rate was 20.0% against 6.5% on dev, so the dev estimate was noisy. For the dense config, test shows 8.3% (plain) vs 6.5% (with prompt and verifier), with no gain in faithfulness. The fixes are not shown to help.
+
+## ADR-008 — Deployed config: `L_dense`
+
+**Date:** 20 November 2026  
+**Status:** Implemented
+
+### Context
+
+Render's free tier has 512 MB. Measured in Docker (`eval/results/memory.json`, `scripts/measure_memory.py`): `hybrid_400_rerank` peaks at 1,945 MiB over 10 requests; the dense configs peak at about 375 MiB (idle 245 MiB).
+
+### Decision
+
+Deploy `L_dense` (dense search plus `answer_v2` and the claim verifier), chosen on dev as the best dense variant. Models are baked into the image so the first question does not download them. A 10 requests per minute per-IP limit and a daily £0.50 spend cap protect the public demo.
+
+### Consequences
+
+The deployed config has its own test numbers (README). Retrieval is weaker than hybrid with reranking (hit rate 89.8% vs 92.9% on test) and the dense config has lower refusal recall (93.3% vs 96.7%).

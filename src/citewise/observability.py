@@ -31,6 +31,7 @@ from citewise.models import Answer
 log = logging.getLogger(__name__)
 
 MAX_TEXT_CHARS = 500
+MAX_ANSWER_CHARS = 2000
 
 # Order matters: card numbers are removed before the looser phone pattern runs.
 _REDACTIONS: list[tuple[re.Pattern[str], str]] = [
@@ -41,11 +42,11 @@ _REDACTIONS: list[tuple[re.Pattern[str], str]] = [
 ]
 
 
-def redact(text: str) -> str:
+def redact(text: str, max_chars: int = MAX_TEXT_CHARS) -> str:
     """Replace National Insurance, card, email and phone numbers, then cap the length."""
     for pattern, label in _REDACTIONS:
         text = pattern.sub(label, text)
-    return text[:MAX_TEXT_CHARS]
+    return text[:max_chars]
 
 
 @dataclass
@@ -198,7 +199,7 @@ def build_otlp(recorder: TraceRecorder, answer: Answer, ended: datetime) -> dict
     root_attrs: dict[str, Any] = {
         "langfuse.trace.name": "ask",
         "langfuse.trace.input": redact(recorder.question),
-        "langfuse.trace.output": redact(answer.answer),
+        "langfuse.trace.output": redact(answer.answer, MAX_ANSWER_CHARS),
         "langfuse.trace.tags": [answer.config_name, status],
         "langfuse.trace.metadata.config": answer.config_name,
         "langfuse.trace.metadata.latency_ms": answer.latency_ms,
@@ -207,6 +208,8 @@ def build_otlp(recorder: TraceRecorder, answer: Answer, ended: datetime) -> dict
         "langfuse.trace.metadata.refusal_reason": answer.refusal_reason,
         "langfuse.trace.metadata.verifier_path": answer.verifier_path,
         "langfuse.observation.type": "span",
+        "langfuse.observation.input": redact(recorder.question),
+        "langfuse.observation.output": redact(answer.answer, MAX_ANSWER_CHARS),
     }
     for key, value in recorder.metadata.items():
         root_attrs[f"langfuse.trace.metadata.{key}"] = value

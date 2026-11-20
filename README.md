@@ -153,6 +153,14 @@ with root causes, for example:
 - `q096`: the repair step removed useful content.
 - `q218`: a must-refuse question answered by all three configs.
 
+## Monitoring
+
+Every `/ask` request can produce one [Langfuse](https://langfuse.com) trace, with spans for the input guardrail, retrieval, the evidence check and context, generation and claim verification. Each LLM call records its model, tokens, latency and cost in GBP, and the trace carries the retrieved URLs, `refused`, `refusal_reason` and the verifier path. Questions and answers are redacted (National Insurance numbers, card numbers, emails, phone numbers) and capped before sending.
+
+![A Langfuse trace for one answered question](images/langfuse_trace.png)
+
+Tracing is off unless `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` are set. When on, traces are posted from a background thread to Langfuse's OpenTelemetry endpoint and every error is swallowed, so tracing cannot slow down or break an answer (`src/citewise/observability.py`, no extra SDK). Peak memory with tracing on was 377.6 MiB (see above).
+
 ## Engineering
 
 - 120 tests (unit and integration), `ruff`, `mypy --strict`, run in GitHub Actions on every push.

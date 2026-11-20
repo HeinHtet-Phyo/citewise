@@ -301,3 +301,28 @@ Gemini: $0 (free tier only).
 ---
 
 *Last updated: Phase 0 setup.*
+
+---
+
+## Finish session
+
+Goal: make Citewise recruiter-ready (Parts 1 to 9 of the finish prompt).
+
+**Done**
+- Code-review bug fixes (`d44cbe8`).
+- Render deployment, live demo defaults to `dense_400` to fit 512 MB (`5a8b193`).
+- Part 2: percentage metrics, DeepSeek judge, experiment runner (`bb09782`).
+
+**In progress**
+- Part 1 (subagent): eval set with ground truth, unanswerable and adversarial questions, dev/test re-split. Files are uncommitted until reviewed.
+- Part 3 (parametric leakage): design settled, code not yet written. Plan: `answer_v2` prompt, `guardrails.verify_claims`, small-to-big context, `top_k_context` 6 vs 10, deterministic point IDs (`uuid5`) plus `position` payload, then configs A, B, C, D, E and L.
+
+**Next**
+1. Review and commit Part 1.
+2. Implement Part 3 with unit tests; rebuild the local index; run dev experiments; choose the config on dev; run test once for the final config, A and L; make charts.
+3. Parts 4 to 9: hand-check CSVs (user fills `human_ok`), deployment memory and cold start, integration tests and CI, README rewrite, interview notes, independent review.
+
+**For the user**
+- Rotate the Qdrant API key (Qdrant dashboard, then Render env var, then `.env`).
+- Add the `NEBIUS_API_KEY` GitHub secret for the smoke-eval CI job.
+- Fill `human_ok` in both hand-check CSVs and record the demo GIF.

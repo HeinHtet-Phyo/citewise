@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     # Hugging Face
     hf_token: str = Field(default="", alias="HF_TOKEN")
 
+    # Public demo
+    default_config: str = Field(default="L_dense", alias="CITEWISE_CONFIG")
+    daily_budget_gbp: float = Field(default=0.50, alias="DAILY_BUDGET_GBP")
+    rate_limit_per_minute: int = Field(default=10, alias="RATE_LIMIT_PER_MINUTE")
+
     # LLM cache
     llm_cache_enabled: bool = Field(default=True, alias="LLM_CACHE")
     llm_cache_dir: str = Field(default=".llm_cache", alias="LLM_CACHE_DIR")

@@ -92,3 +92,14 @@ def test_index_serves_html(client: TestClient) -> None:
     assert res.status_code == 200
     assert "text/html" in res.headers["content-type"]
     assert b"Citewise" in res.content
+
+
+def test_daily_budget_blocks_after_cap() -> None:
+    from citewise.api.budget import DailyBudget
+
+    budget = DailyBudget(cap_gbp=0.001)
+    assert not budget.exhausted()
+    budget.add(0.0006)
+    assert not budget.exhausted()
+    budget.add(0.0006)
+    assert budget.exhausted()

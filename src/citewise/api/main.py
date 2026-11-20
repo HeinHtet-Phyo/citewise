@@ -21,7 +21,8 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from citewise.config import RagConfig
+from citewise.api.budget import DailyBudget
+from citewise.config import RagConfig, settings
 from citewise.models import Answer
 from citewise.rag import answer_question
 
@@ -29,9 +30,10 @@ log = logging.getLogger(__name__)
 
 _STATIC_DIR = Path(__file__).parent / "static"
 
-# In-memory rate limiter — 10 requests per minute per IP.
+# In-memory rate limiter — per-IP requests per minute (RATE_LIMIT_PER_MINUTE, default 10).
 _rate_buckets: dict[str, list[float]] = defaultdict(list)
-_RATE_LIMIT = 10
+_RATE_LIMIT = settings.rate_limit_per_minute
+_budget = DailyBudget(settings.daily_budget_gbp)
 _RATE_WINDOW = 60.0
 
 
@@ -49,12 +51,14 @@ _GIT_SHA: str = _read_git_sha()
 
 
 async def _rate_limit(request: Request) -> None:
-    """Raise 429 if the caller exceeds 10 requests per minute."""
+    """Raise 429 if the caller exceeds the per-minute request limit."""
     ip = request.client.host if request.client else "unknown"
     now = time()
     _rate_buckets[ip] = [t for t in _rate_buckets[ip] if now - t < _RATE_WINDOW]
     if len(_rate_buckets[ip]) >= _RATE_LIMIT:
-        raise HTTPException(status_code=429, detail="Rate limit: 10 requests/minute. Please wait.")
+        raise HTTPException(
+            status_code=429, detail=f"Rate limit: {_RATE_LIMIT} requests/minute. Please wait."
+        )
     _rate_buckets[ip].append(now)
     # Prune keys whose buckets are now empty to prevent unbounded dict growth.
     if not _rate_buckets[ip]:
@@ -76,30 +80,25 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 
-# Named configs — hybrid_400_rerank is the tuned best config (threshold tuned on dev split).
+# Named configs. dense_400 is the unfixed baseline; L_dense adds answer_v2 and the claim verifier.
 _CONFIGS: dict[str, RagConfig] = {
     "hybrid_400_rerank": RagConfig(
         config_name="hybrid_400_rerank",
-        chunk_size=400,
-        collection_name="citewise_400",
         search_mode="hybrid",
-        top_k_retrieve=30,
         use_reranker=True,
-        top_k_context=6,
         refusal_threshold=0.3,
     ),
-    "dense_400": RagConfig(
-        config_name="dense_400",
-        chunk_size=400,
-        collection_name="citewise_400",
+    "dense_400": RagConfig(config_name="dense_400", search_mode="dense", use_reranker=False),
+    "L_dense": RagConfig(
+        config_name="L_dense",
         search_mode="dense",
-        top_k_retrieve=30,
         use_reranker=False,
-        top_k_context=6,
+        prompt_version="v2",
+        verify_claims=True,
     ),
 }
-# Live demo defaults to dense_400: no reranker or BM25 model, so it fits in 512 MB on Render free.
-_DEFAULT_CONFIG = "dense_400"
+# The deployed config is set by CITEWISE_CONFIG (the 512 MB Render limit decides which fits).
+_DEFAULT_CONFIG = settings.default_config
 
 
 class AskRequest(BaseModel):
@@ -142,6 +141,12 @@ async def ask(
             status_code=400,
             detail=f"Unknown config '{body.config_name}'. Available: {list(_CONFIGS)}",
         )
+    if _budget.exhausted():
+        raise HTTPException(
+            status_code=503, detail="The demo's daily budget has been used up. Try again tomorrow."
+        )
     config = _CONFIGS[body.config_name]
     log.info("POST /ask config=%s question=%.60s", config.config_name, body.question)
-    return answer_question(body.question, config)
+    answer = answer_question(body.question, config)
+    _budget.add(answer.cost_gbp)
+    return answer

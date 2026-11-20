@@ -362,6 +362,10 @@
     spinner.classList.add("visible");
     errorBanner.classList.remove("visible");
     resultDiv.innerHTML = "";
+    spinner.textContent = "Searching GOV.UK guidance…";
+    const wakeTimer = setTimeout(() => {
+      spinner.textContent = "Waking up the server… the free tier sleeps when idle, so the first answer can take up to a minute.";
+    }, 5000);
 
     try {
       const res = await fetch("/ask", {
@@ -372,6 +376,9 @@
 
       if (res.status === 429) {
         throw new Error("Rate limit reached (10 requests/minute). Please wait a moment.");
+      }
+      if (res.status === 503) {
+        throw new Error("The demo's daily budget has been used up. Please try again tomorrow.");
       }
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: res.statusText }));
@@ -385,6 +392,7 @@
       errorBanner.textContent = "Error: " + err.message;
       errorBanner.classList.add("visible");
     } finally {
+      clearTimeout(wakeTimer);
       askBtn.disabled = false;
       spinner.classList.remove("visible");
     }
@@ -397,6 +405,8 @@
           <strong>No answer found.</strong>
           ${data.refusal_reason === "low_evidence"
             ? " The guidance does not contain enough information to answer this question reliably. Try rephrasing or check <a href='https://www.gov.uk' target='_blank' rel='noopener'>gov.uk</a> directly."
+            : data.refusal_reason === "unsupported_claims"
+            ? " The draft answer contained claims the guidance does not support, so it was withheld rather than risk a made-up figure."
             : data.refusal_reason === "unsafe"
             ? " This question cannot be answered by this service."
             : " This question is outside the scope of UK government guidance."}

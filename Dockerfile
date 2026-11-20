@@ -20,6 +20,13 @@ RUN pip install --no-cache-dir -e .
 COPY src/ src/
 COPY app.py ./
 
+# Bake the embedding and reranker models into the image so a cold start does not download them.
+ENV FASTEMBED_CACHE_PATH=/app/models
+RUN python -c "from fastembed import TextEmbedding, SparseTextEmbedding; \
+from fastembed.rerank.cross_encoder import TextCrossEncoder; \
+TextEmbedding('BAAI/bge-small-en-v1.5'); SparseTextEmbedding('Qdrant/bm25'); \
+TextCrossEncoder('Xenova/ms-marco-MiniLM-L-6-v2')"
+
 # Non-root user for security
 RUN useradd -m appuser && chown -R appuser /app
 USER appuser

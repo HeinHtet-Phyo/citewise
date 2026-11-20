@@ -1,0 +1,150 @@
+{"question_id": "q001", "question": "How much is Statutory Sick Pay per week?", "topic": "benefits", "split": "dev"}
+{"question_id": "q002", "question": "Am I entitled to Statutory Sick Pay if I am a part-time worker?", "topic": "benefits", "split": "dev"}
+{"question_id": "q003", "question": "How long can I receive Statutory Sick Pay?", "topic": "benefits", "split": "dev"}
+{"question_id": "q004", "question": "What is the Universal Credit standard allowance for a single person over 25?", "topic": "benefits", "split": "dev"}
+{"question_id": "q005", "question": "How do I make a new claim for Universal Credit?", "topic": "benefits", "split": "dev"}
+{"question_id": "q006", "question": "Can I get Universal Credit if I am employed but on a low income?", "topic": "benefits", "split": "dev"}
+{"question_id": "q007", "question": "How much savings can I have before Universal Credit is affected?", "topic": "benefits", "split": "dev"}
+{"question_id": "q008", "question": "Can I get Jobseeker's Allowance while doing part-time work?", "topic": "benefits", "split": "dev"}
+{"question_id": "q009", "question": "How long can I claim contribution-based Jobseeker's Allowance?", "topic": "benefits", "split": "dev"}
+{"question_id": "q010", "question": "What happens to my benefits if I go abroad for a holiday?", "topic": "benefits", "split": "dev"}
+{"question_id": "q011", "question": "Am I entitled to Statutory Maternity Pay if I am self-employed?", "topic": "benefits", "split": "dev"}
+{"question_id": "q012", "question": "How many weeks of Statutory Maternity Pay can I receive?", "topic": "benefits", "split": "dev"}
+{"question_id": "q013", "question": "What is the rate of Statutory Maternity Pay?", "topic": "benefits", "split": "dev"}
+{"question_id": "q014", "question": "Am I entitled to paid paternity leave?", "topic": "benefits", "split": "dev"}
+{"question_id": "q015", "question": "Can I get Child Benefit if I earn more than \u00a360,000?", "topic": "benefits", "split": "dev"}
+{"question_id": "q016", "question": "How do I claim Child Benefit for a newborn?", "topic": "benefits", "split": "dev"}
+{"question_id": "q017", "question": "What is the Benefit Cap and how does it work?", "topic": "benefits", "split": "dev"}
+{"question_id": "q018", "question": "Can I claim Personal Independence Payment if I work full-time?", "topic": "benefits", "split": "dev"}
+{"question_id": "q019", "question": "What is the difference between PIP daily living and mobility components?", "topic": "benefits", "split": "dev"}
+{"question_id": "q020", "question": "How is Attendance Allowance different from PIP?", "topic": "benefits", "split": "dev"}
+{"question_id": "q021", "question": "Can I get help with council tax if I am on a low income?", "topic": "benefits", "split": "dev"}
+{"question_id": "q022", "question": "What is Pension Credit and who can claim it?", "topic": "benefits", "split": "dev"}
+{"question_id": "q023", "question": "What is the qualifying age for State Pension?", "topic": "benefits", "split": "dev"}
+{"question_id": "q024", "question": "What is the new State Pension amount per week?", "topic": "benefits", "split": "dev"}
+{"question_id": "q025", "question": "Can I defer my State Pension?", "topic": "benefits", "split": "dev"}
+{"question_id": "q026", "question": "What bereavement benefits am I entitled to if my spouse dies?", "topic": "benefits", "split": "dev"}
+{"question_id": "q027", "question": "Can I claim Carer's Allowance if I work part-time?", "topic": "benefits", "split": "dev"}
+{"question_id": "q028", "question": "What is the earnings limit for Carer's Allowance?", "topic": "benefits", "split": "dev"}
+{"question_id": "q029", "question": "Am I entitled to free school meals for my child?", "topic": "benefits", "split": "dev"}
+{"question_id": "q030", "question": "What is Tax-Free Childcare and how does it work?", "topic": "benefits", "split": "dev"}
+{"question_id": "q031", "question": "How do I apply for 15 hours of free childcare for two-year-olds?", "topic": "benefits", "split": "dev"}
+{"question_id": "q032", "question": "What is Employment and Support Allowance?", "topic": "benefits", "split": "dev"}
+{"question_id": "q033", "question": "What is the two-child limit for Universal Credit?", "topic": "benefits", "split": "dev"}
+{"question_id": "q034", "question": "What counts as a couple for Universal Credit purposes?", "topic": "benefits", "split": "dev"}
+{"question_id": "q035", "question": "How does the Universal Credit taper rate work?", "topic": "benefits", "split": "dev"}
+{"question_id": "q036", "question": "What is the work allowance in Universal Credit?", "topic": "benefits", "split": "dev"}
+{"question_id": "q037", "question": "What is a Mandatory Reconsideration in the benefits system?", "topic": "benefits", "split": "dev"}
+{"question_id": "q038", "question": "How do I report a change of circumstances for Universal Credit?", "topic": "benefits", "split": "dev"}
+{"question_id": "q039", "question": "What is Statutory Shared Parental Leave?", "topic": "benefits", "split": "dev"}
+{"question_id": "q040", "question": "How is the childcare element of Universal Credit calculated?", "topic": "benefits", "split": "dev"}
+{"question_id": "q041", "question": "What is the minimum notice period my employer must give me?", "topic": "employment", "split": "dev"}
+{"question_id": "q042", "question": "How much statutory redundancy pay am I entitled to?", "topic": "employment", "split": "dev"}
+{"question_id": "q043", "question": "Am I entitled to redundancy pay if I have worked for two years?", "topic": "employment", "split": "dev"}
+{"question_id": "q044", "question": "What is the maximum amount of a week's pay for statutory redundancy calculations?", "topic": "employment", "split": "dev"}
+{"question_id": "q045", "question": "What is the National Minimum Wage for workers aged 21 and over?", "topic": "employment", "split": "dev"}
+{"question_id": "q046", "question": "Can my employer make deductions from my wages without my consent?", "topic": "employment", "split": "dev"}
+{"question_id": "q047", "question": "How much annual leave am I entitled to by law?", "topic": "employment", "split": "dev"}
+{"question_id": "q048", "question": "Can I carry over unused annual leave to the next year?", "topic": "employment", "split": "dev"}
+{"question_id": "q049", "question": "What is a zero-hours contract and what rights do I have?", "topic": "employment", "split": "dev"}
+{"question_id": "q050", "question": "What is unfair dismissal and how do I claim it?", "topic": "employment", "split": "dev"}
+{"question_id": "q051", "question": "What is the qualifying period for unfair dismissal?", "topic": "employment", "split": "dev"}
+{"question_id": "q052", "question": "How do I make an employment tribunal claim?", "topic": "employment", "split": "dev"}
+{"question_id": "q053", "question": "What is the time limit for making an employment tribunal claim?", "topic": "employment", "split": "dev"}
+{"question_id": "q054", "question": "What is the ACAS early conciliation process?", "topic": "employment", "split": "dev"}
+{"question_id": "q055", "question": "What is a settlement agreement and do I need a solicitor to sign one?", "topic": "employment", "split": "dev"}
+{"question_id": "q056", "question": "What is a TUPE transfer and what does it mean for my employment?", "topic": "employment", "split": "dev"}
+{"question_id": "q057", "question": "Am I protected from detriment if I blow the whistle on my employer?", "topic": "employment", "split": "dev"}
+{"question_id": "q058", "question": "Am I entitled to request flexible working?", "topic": "employment", "split": "dev"}
+{"question_id": "q059", "question": "What rights does a worker have compared to an employee?", "topic": "employment", "split": "dev"}
+{"question_id": "q060", "question": "Am I entitled to paid time off for antenatal appointments?", "topic": "employment", "split": "dev"}
+{"question_id": "q061", "question": "How is holiday pay calculated for someone with irregular hours?", "topic": "employment", "split": "dev"}
+{"question_id": "q062", "question": "Can I be dismissed during maternity leave?", "topic": "employment", "split": "dev"}
+{"question_id": "q063", "question": "What is constructive dismissal?", "topic": "employment", "split": "dev"}
+{"question_id": "q064", "question": "Am I entitled to pay when on jury service?", "topic": "employment", "split": "dev"}
+{"question_id": "q065", "question": "Am I entitled to reasonable adjustments at work if I have a disability?", "topic": "employment", "split": "dev"}
+{"question_id": "q066", "question": "What is the Right to Buy scheme and who is eligible?", "topic": "housing", "split": "dev"}
+{"question_id": "q067", "question": "How large is the Right to Buy discount?", "topic": "housing", "split": "dev"}
+{"question_id": "q068", "question": "How do I apply for council housing?", "topic": "housing", "split": "dev"}
+{"question_id": "q069", "question": "What is an Assured Shorthold Tenancy?", "topic": "housing", "split": "dev"}
+{"question_id": "q070", "question": "How much notice must a landlord give before ending a tenancy?", "topic": "housing", "split": "dev"}
+{"question_id": "q071", "question": "What is a Section 21 notice?", "topic": "housing", "split": "dev"}
+{"question_id": "q072", "question": "What is a Section 8 notice?", "topic": "housing", "split": "dev"}
+{"question_id": "q073", "question": "Can my landlord increase my rent during a fixed-term tenancy?", "topic": "housing", "split": "dev"}
+{"question_id": "q074", "question": "What is the tenancy deposit limit?", "topic": "housing", "split": "dev"}
+{"question_id": "q075", "question": "How long does a landlord have to return my deposit?", "topic": "housing", "split": "dev"}
+{"question_id": "q076", "question": "What is a tenancy deposit protection scheme?", "topic": "housing", "split": "dev"}
+{"question_id": "q077", "question": "Can my landlord enter my home without permission?", "topic": "housing", "split": "dev"}
+{"question_id": "q078", "question": "What repairs is a landlord responsible for?", "topic": "housing", "split": "dev"}
+{"question_id": "q079", "question": "Do I need planning permission to build an extension?", "topic": "housing", "split": "dev"}
+{"question_id": "q080", "question": "What is Permitted Development for home improvements?", "topic": "housing", "split": "dev"}
+{"question_id": "q081", "question": "How much is Stamp Duty Land Tax on a first home?", "topic": "housing", "split": "dev"}
+{"question_id": "q082", "question": "Am I entitled to relief on Stamp Duty as a first-time buyer?", "topic": "housing", "split": "dev"}
+{"question_id": "q083", "question": "What is the Local Housing Allowance and how is it calculated?", "topic": "housing", "split": "dev"}
+{"question_id": "q084", "question": "What is a House in Multiple Occupation (HMO)?", "topic": "housing", "split": "dev"}
+{"question_id": "q085", "question": "What is the Right to Acquire for housing association tenants?", "topic": "housing", "split": "dev"}
+{"question_id": "q086", "question": "How do I apply for a provisional driving licence?", "topic": "transport", "split": "dev"}
+{"question_id": "q087", "question": "What are the minimum eyesight standards for driving?", "topic": "transport", "split": "dev"}
+{"question_id": "q088", "question": "What is the pass mark for the driving theory test?", "topic": "transport", "split": "dev"}
+{"question_id": "q089", "question": "How long is a provisional driving licence valid?", "topic": "transport", "split": "dev"}
+{"question_id": "q090", "question": "When does my car need an MOT?", "topic": "transport", "split": "dev"}
+{"question_id": "q091", "question": "Can I drive without a valid MOT?", "topic": "transport", "split": "dev"}
+{"question_id": "q092", "question": "How do I tax my vehicle online?", "topic": "transport", "split": "dev"}
+{"question_id": "q093", "question": "What is the penalty for driving without insurance?", "topic": "transport", "split": "dev"}
+{"question_id": "q094", "question": "How many penalty points lead to a driving ban?", "topic": "transport", "split": "dev"}
+{"question_id": "q095", "question": "Can I do a speed awareness course instead of accepting penalty points?", "topic": "transport", "split": "dev"}
+{"question_id": "q096", "question": "What is a blue badge and who is eligible?", "topic": "transport", "split": "dev"}
+{"question_id": "q097", "question": "How do I apply for a blue badge?", "topic": "transport", "split": "dev"}
+{"question_id": "q098", "question": "What is a Notice of Intended Prosecution?", "topic": "transport", "split": "dev"}
+{"question_id": "q099", "question": "What is a SORN declaration?", "topic": "transport", "split": "dev"}
+{"question_id": "q100", "question": "Am I required to inform the DVLA if I have a medical condition affecting my driving?", "topic": "transport", "split": "dev"}
+{"question_id": "q101", "question": "Can a non-UK national claim benefits in the UK?", "topic": "benefits", "split": "test"}
+{"question_id": "q102", "question": "What is the habitual residence test for benefits?", "topic": "benefits", "split": "test"}
+{"question_id": "q103", "question": "Can I appeal a Universal Credit decision?", "topic": "benefits", "split": "test"}
+{"question_id": "q104", "question": "Can I claim both PIP and Universal Credit at the same time?", "topic": "benefits", "split": "test"}
+{"question_id": "q105", "question": "What is the Sure Start Maternity Grant?", "topic": "benefits", "split": "test"}
+{"question_id": "q106", "question": "What is a Budgeting Loan and who can apply?", "topic": "benefits", "split": "test"}
+{"question_id": "q107", "question": "What is Disability Living Allowance and can new claimants apply for it?", "topic": "benefits", "split": "test"}
+{"question_id": "q108", "question": "What is the Severe Disability Premium?", "topic": "benefits", "split": "test"}
+{"question_id": "q109", "question": "Can a carer claim Universal Credit?", "topic": "benefits", "split": "test"}
+{"question_id": "q110", "question": "What is the Childcare Grant for full-time students in higher education?", "topic": "benefits", "split": "test"}
+{"question_id": "q111", "question": "How do I check my State Pension forecast?", "topic": "benefits", "split": "test"}
+{"question_id": "q112", "question": "How much savings can I have before Pension Credit is affected?", "topic": "benefits", "split": "test"}
+{"question_id": "q113", "question": "What is the housing benefit for a single person under 35?", "topic": "benefits", "split": "test"}
+{"question_id": "q114", "question": "Can I get Universal Credit and working tax credit at the same time?", "topic": "benefits", "split": "test"}
+{"question_id": "q115", "question": "How many hours per week must I be available for work under Universal Credit?", "topic": "benefits", "split": "test"}
+{"question_id": "q116", "question": "What is Statutory Adoption Pay and who is eligible?", "topic": "benefits", "split": "test"}
+{"question_id": "q117", "question": "What is the Household Support Fund?", "topic": "benefits", "split": "test"}
+{"question_id": "q118", "question": "Am I eligible for a Council Tax reduction as a student?", "topic": "benefits", "split": "test"}
+{"question_id": "q119", "question": "What is the qualifying age for Attendance Allowance?", "topic": "benefits", "split": "test"}
+{"question_id": "q120", "question": "How is the ESA assessment phase different from the main phase?", "topic": "benefits", "split": "test"}
+{"question_id": "q121", "question": "What is the Employment Allowance for employers?", "topic": "employment", "split": "test"}
+{"question_id": "q122", "question": "How does IR35 affect self-employed contractors?", "topic": "employment", "split": "test"}
+{"question_id": "q123", "question": "Can I be dismissed for taking part in a lawful strike?", "topic": "employment", "split": "test"}
+{"question_id": "q124", "question": "What is the apprenticeship minimum wage?", "topic": "employment", "split": "test"}
+{"question_id": "q125", "question": "What is a Fit Note and when does my employer require one?", "topic": "employment", "split": "test"}
+{"question_id": "q126", "question": "What are my rights if my employer goes into administration?", "topic": "employment", "split": "test"}
+{"question_id": "q127", "question": "Can my employer change my terms and conditions without my agreement?", "topic": "employment", "split": "test"}
+{"question_id": "q128", "question": "Am I entitled to pay during a period of lay-off or short-time working?", "topic": "employment", "split": "test"}
+{"question_id": "q129", "question": "What is the right to request time off for training?", "topic": "employment", "split": "test"}
+{"question_id": "q130", "question": "Am I entitled to written reasons for my dismissal?", "topic": "employment", "split": "test"}
+{"question_id": "q131", "question": "What is a leasehold property?", "topic": "housing", "split": "test"}
+{"question_id": "q132", "question": "What are my rights as a leaseholder regarding service charges?", "topic": "housing", "split": "test"}
+{"question_id": "q133", "question": "Can I buy a shared ownership property?", "topic": "housing", "split": "test"}
+{"question_id": "q134", "question": "What is a Lifetime ISA and can I use it towards a house purchase?", "topic": "housing", "split": "test"}
+{"question_id": "q135", "question": "How do I complain about a landlord to the local authority?", "topic": "housing", "split": "test"}
+{"question_id": "q136", "question": "What is ground rent and are there restrictions on how it can be charged?", "topic": "housing", "split": "test"}
+{"question_id": "q137", "question": "Am I entitled to a rent repayment order if my landlord has no licence?", "topic": "housing", "split": "test"}
+{"question_id": "q138", "question": "What is the decent homes standard for social housing?", "topic": "housing", "split": "test"}
+{"question_id": "q139", "question": "What is an environmental health inspection and when can it be requested?", "topic": "housing", "split": "test"}
+{"question_id": "q140", "question": "What is the Help to Buy equity loan?", "topic": "housing", "split": "test"}
+{"question_id": "q141", "question": "Can I drive in the UK with a foreign driving licence?", "topic": "transport", "split": "test"}
+{"question_id": "q142", "question": "What is the minimum age requirement for riding a moped in the UK?", "topic": "transport", "split": "test"}
+{"question_id": "q143", "question": "Do I need to register my vehicle when I move to the UK from abroad?", "topic": "transport", "split": "test"}
+{"question_id": "q144", "question": "How do I transfer a private number plate to another vehicle?", "topic": "transport", "split": "test"}
+{"question_id": "q145", "question": "What is the minimum age to drive a lorry or HGV?", "topic": "transport", "split": "test"}
+{"question_id": "q146", "question": "What is the new driver period after passing the driving test?", "topic": "transport", "split": "test"}
+{"question_id": "q147", "question": "What is the congestion charge zone and who must pay it?", "topic": "transport", "split": "test"}
+{"question_id": "q148", "question": "How do I renew my driving licence at age 70?", "topic": "transport", "split": "test"}
+{"question_id": "q149", "question": "What is the penalty for using a mobile phone while driving?", "topic": "transport", "split": "test"}
+{"question_id": "q150", "question": "Can I tow a trailer with a standard car driving licence?", "topic": "transport", "split": "test"}

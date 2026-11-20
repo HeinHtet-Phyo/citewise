@@ -1,0 +1,65 @@
+{
+  "seed": 20261119,
+  "model": "openai/Qwen/Qwen3-235B-A22B-Instruct-2507",
+  "original_questions": 150,
+  "existing_kept": 86,
+  "new_kept": 64,
+  "refusals_added": 45,
+  "dropped_by_reason": {
+    "existing:model_says_not_answerable": 22,
+    "existing:number_not_in_page": 3,
+    "existing:quote_not_in_page": 37,
+    "existing:quote_too_short": 2,
+    "new:bad_topic": 1,
+    "new:model_says_not_answerable": 9,
+    "new:number_not_in_page": 1,
+    "new:quote_not_in_page": 39,
+    "new:quote_too_short": 2
+  },
+  "total": 195,
+  "counts": {
+    "split": {
+      "dev": 65,
+      "test": 130
+    },
+    "type": {
+      "adversarial": 15,
+      "how_to": 15,
+      "multi_page": 30,
+      "single_fact": 105,
+      "unanswerable": 30
+    },
+    "topic": {
+      "benefits": 66,
+      "employment": 47,
+      "housing": 39,
+      "transport": 43
+    },
+    "split_x_type": {
+      "dev/adversarial": 5,
+      "dev/how_to": 5,
+      "dev/multi_page": 10,
+      "dev/single_fact": 35,
+      "dev/unanswerable": 10,
+      "test/adversarial": 10,
+      "test/how_to": 10,
+      "test/multi_page": 20,
+      "test/single_fact": 70,
+      "test/unanswerable": 20
+    },
+    "split_x_topic": {
+      "dev/benefits": 22,
+      "dev/employment": 16,
+      "dev/housing": 12,
+      "dev/transport": 15,
+      "test/benefits": 44,
+      "test/employment": 31,
+      "test/housing": 27,
+      "test/transport": 28
+    }
+  },
+  "nebius_calls": 266,
+  "cache_hits": 0,
+  "nebius_spend_usd": 0.1028,
+  "spend_note": "Figures are from the first (uncached) run; later reruns are served from .llm_cache and cost nothing."
+}

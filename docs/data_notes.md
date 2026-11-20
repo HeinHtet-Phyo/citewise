@@ -34,26 +34,32 @@ Non-English pages (locale ≠ `en`) are excluded.
 
 | Format | Count |
 |--------|-------|
-| answer | 769 |
+| answer | 790 |
 | guide | 860 |
-| detailed_guide | 1,684 |
-| **Total** | **3,313** |
+| detailed_guide | 1,685 |
+| **Total** | **3,335** |
 
 The detailed_guide count comes from four taxonomy topics: welfare/benefits (88), work/employment (195), housing and local community (1,026), transport/driving (404), minus 29 pages that were deduplicated across topics.
 
 ## Fetch results
 
-- Pages successfully fetched and cached: **3,313**
+- Pages successfully fetched and cached: **3,335** (3,313 from discovery plus 22 added later, see below)
 - Pages that failed: **0** (see `data/fetch_failures.csv`)
 
 ## Chunk counts and token statistics
 
 | Chunk size | Chunks | Min tokens | Avg tokens | Max tokens | Over limit |
 |------------|--------|-----------|-----------|-----------|-----------|
-| 400 | 21,740 | 9 | 282 | 998 | 113 (0.5%) |
-| 800 | 12,311 | 27 | 486 | 998 | 39 (0.3%) |
+| 400 | 21,806 | 9 | 282 | 998 | 116 (0.5%) |
+| 800 | 12,349 | 27 | 486 | 998 | 39 (0.3%) |
 
 The 400- and 800-token sizes produce meaningfully different chunks (282 vs 486 avg tokens, ratio 1.72×) thanks to section merging: adjacent sections from the same guide part are greedily merged before splitting. The 0.5% over-limit cases are single very long sections — bullet-heavy tables or long prose blocks — that exceed the limit even as a single section and cannot be split further without breaking meaning.
+
+## Corpus extension (after the evaluation)
+
+Spot checks showed common citizen pages were missing (State Pension age, Council Tax bands and others). `src/citewise/ingest/extend.py` added 22 pages from the Content API: State Pension age and forecast, the State Pension age timetable, Council Tax band and reduction pages, Register to vote, Blue Badge, vehicle tax and MOT history, a few calculators and DVLA pages (full list in `EXTRA_PATHS`). Their chunks were appended (66 at 400 tokens, 38 at 800) and only the missing points were upserted to local and cloud Qdrant (`python -m citewise.index.build citewise_400 400 --missing`). Existing chunk IDs are unchanged.
+
+These are service pages (`smart_answer`, `transaction`, `local_transaction`, `policy_paper`) with no page body, so `clean.py` builds their text from the description and introduction fields and stores them as format `answer`. They are short and mostly point to an online service; for example the State Pension age page does not state ages. **The evaluation was not re-run after this extension**, so all reported metrics describe the original 3,313-page corpus.
 
 ## Exclusions and decisions
 
@@ -72,4 +78,4 @@ The 400- and 800-token sizes produce meaningfully different chunks (282 vs 486 a
 
 ## Index note
 
-`citewise_400` holds 21,739 points for 21,740 chunks: two chunks share a `chunk_id`, so the deterministic point ID (UUID5 of `chunk_id`) overwrites one of them. Point IDs were previously derived from Python's randomised `hash()`, which created duplicates when the index was rebuilt; that is fixed.
+`citewise_400` holds 21,805 points for 21,806 chunks: two chunks share a `chunk_id`, so the deterministic point ID (UUID5 of `chunk_id`) overwrites one of them. Point IDs were previously derived from Python's randomised `hash()`, which created duplicates when the index was rebuilt; that is fixed.

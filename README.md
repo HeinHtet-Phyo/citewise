@@ -10,7 +10,7 @@
 ![Citewise demo](images/demo.gif)
 -->
 
-Citewise answers questions about benefits, employment, housing and driving using 3,313 GOV.UK
+Citewise answers questions about benefits, employment, housing and driving using 3,335 GOV.UK
 pages. Every claim carries a numbered citation to a live GOV.UK page, and the system refuses when
 the evidence is weak. The focus of the project is **measuring** a RAG system honestly, not just
 building one.
@@ -61,7 +61,7 @@ I ran 20 common questions step by step (`scripts/diagnose_refusals.py`). Retriev
 `L_dense`, 4 were refused and 2 more lost sentences:
 
 - 3 were the model replying "I cannot find sufficient information": two are real corpus gaps
-  (no Council Tax rates page, no State Pension age page in the 3,313 pages), and one ("When does my
+  (no Council Tax rates page, no State Pension age page in the original 3,313 pages; I added pages on both afterwards, see Corpus), and one ("When does my
   MOT expire?") was the prompt being too strict about partial answers.
 - 1 ("How much notice must my landlord give?") was the claim verifier flagging "the guidance does
   not specify..." sentences, which then triggered repair and drop.
@@ -94,7 +94,7 @@ treat that improvement as anecdotal.
 - **Small samples.** Dev has 62 questions (47 answerable) and test has 128 (98 answerable); expect
   differences of a few points to be noise. No confidence intervals yet.
 - **The fixes are not shown to help on test.** See above.
-- **Live behaviour:** some answerable questions are refused (for example State Pension age and tenancy notice periods in my spot checks), in line with the 7.1% test false-refusal rate. The API returns every retrieved source; the web page shows the sources the answer cites `[n]` first and puts the rest under "Other pages searched". Eval metric definitions are unchanged: they still score the full retrieved list.
+- **Live behaviour:** some answerable questions are still refused, in line with the 5.1% test false-refusal rate (for example "What are the Council Tax bands?", because the added Council Tax band page is a lookup service and does not list band values). "What is the State Pension age?" now answers with a citation after the corpus extension, but it says the guidance gives no fixed age. The API returns every retrieved source; the web page shows the sources the answer cites `[n]` first and puts the rest under "Other pages searched". Eval metric definitions are unchanged: they still score the full retrieved list.
 - **Live-service limits are in memory:** the rate limiter (10 per minute) and the daily spend cap
   (£0.50) reset on restart.
 
@@ -104,7 +104,7 @@ treat that improvement as anecdotal.
 flowchart LR
     Q[Question] --> G{Guardrails}
     G -- unsafe or out of scope --> R[Refuse]
-    G --> S[Qdrant dense search<br/>bge-small, 21,740 chunks]
+    G --> S[Qdrant dense search<br/>bge-small, 21,806 chunks]
     S --> T{Evidence threshold}
     T -- weak --> R
     T --> L[Qwen3-235B answer<br/>prompt v3, numbered sources]
@@ -128,9 +128,11 @@ Measured locally in Docker for `L_dense` (`eval/results/memory.json`); `L2_dense
 **Stack:** Python 3.11 · FastAPI · Pydantic v2 · Qdrant · fastembed · LiteLLM · Nebius
 (Qwen3-235B generator, Qwen3-30B verifier, DeepSeek-V4.1-Flash judge) · Docker · GitHub Actions.
 
-**Corpus:** 3,313 GOV.UK pages (769 answer, 860 guide, 1,684 detailed guide), section-merge
-chunked into 21,740 chunks of up to 400 tokens, under the
+**Corpus:** 3,335 GOV.UK pages (790 answer, 860 guide, 1,685 detailed guide), section-merge
+chunked into 21,806 chunks of up to 400 tokens, under the
 [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
+
+**The corpus was extended after the evaluation.** The eval ran on the original 3,313 pages and 21,740 chunks. I then added 22 missing citizen pages (State Pension age, Council Tax bands and others, 66 chunks) and did not re-run the eval, so the reported metrics describe the original corpus. The State Pension age page is a service page that does not state ages, so the live answer cites it and says the guidance gives no fixed age. See `docs/data_notes.md`.
 
 ## Failure analysis
 

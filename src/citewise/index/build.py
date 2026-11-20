@@ -127,6 +127,36 @@ def build_index(
     return total
 
 
+def upsert_missing(collection_name: str, chunk_size: int = 400) -> int:
+    """Embed and upsert only the chunks whose point IDs are not yet in the collection."""
+    client = _client()
+    chunks = load_chunks(chunk_size)
+    ids = [_stable_id(c) for c in chunks]
+    present: set[str] = set()
+    for ids_batch in _batched(ids, 500):
+        present.update(str(r.id) for r in client.retrieve(collection_name, ids_batch))
+    missing = [(i, c) for i, c in enumerate(chunks) if ids[i] not in present]
+    total = 0
+    for batch in _batched(missing, UPSERT_BATCH):
+        texts = [c.text for _, c in batch]
+        dense_vecs, sparse_vecs = embed_dense(texts), embed_sparse(texts)
+        points = [
+            PointStruct(
+                id=ids[pos],
+                vector={
+                    COLLECTION_DENSE_NAME: dense_vecs[j],
+                    COLLECTION_SPARSE_NAME: sparse_vecs[j],
+                },
+                payload={**chunk.model_dump(), "position": pos},
+            )
+            for j, (pos, chunk) in enumerate(batch)
+        ]
+        client.upsert(collection_name=collection_name, points=points)
+        total += len(batch)
+    log.info("Upserted %d missing points into %s", total, collection_name)
+    return total
+
+
 def _stable_id(chunk: Chunk) -> str:
     """Derive a deterministic UUID point ID from chunk_id (same on every build)."""
     return str(uuid.uuid5(uuid.NAMESPACE_URL, chunk.chunk_id))
@@ -138,5 +168,8 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     collection = sys.argv[1] if len(sys.argv) > 1 else "citewise_400"
     size = int(sys.argv[2]) if len(sys.argv) > 2 else 400
+    if "--missing" in sys.argv:
+        print(f"Done: {upsert_missing(collection, size)} missing points upserted")
+        raise SystemExit(0)
     n = build_index(collection_name=collection, chunk_size=size)
     print(f"Done: {n} points in {collection}")

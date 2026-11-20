@@ -25,6 +25,27 @@ BOILERPLATE = re.compile(
 )
 
 
+# Service-style GOV.UK document types are stored as the "answer" format in the Chunk contract.
+_FORMAT_MAP = {
+    "smart_answer": "answer",
+    "simple_smart_answer": "answer",
+    "transaction": "answer",
+    "local_transaction": "answer",
+    "policy_paper": "answer",
+}
+
+# Text-bearing fields of pages that have no `body` or `parts` (services and calculators).
+_FALLBACK_FIELDS = (
+    "introductory_paragraph",
+    "introduction",
+    "need_to_know",
+    "what_you_need_to_know",
+    "more_information",
+    "other_ways_to_apply",
+    "hidden_search_terms",
+)
+
+
 @dataclass
 class Section:
     """One section of a GOV.UK page."""
@@ -100,6 +121,18 @@ def _split_into_sections(text: str, base_url: str) -> list[Section]:
     return sections
 
 
+def _fallback_html(data: dict, details: dict) -> str:  # type: ignore[type-arg]
+    """Join the description and service-page text fields into one HTML string."""
+    pieces = [f"<p>{data.get('description', '')}</p>"]
+    for field in _FALLBACK_FIELDS:
+        value = details.get(field)
+        if isinstance(value, list):
+            value = " ".join(str(v) for v in value)
+        if value:
+            pieces.append(f"<p>{value}</p>" if "<" not in str(value) else str(value))
+    return "\n".join(pieces)
+
+
 def clean_page(raw_path: Path) -> CleanPage | None:
     """
     Parse one raw Content API JSON file and return a CleanPage.
@@ -114,7 +147,8 @@ def clean_page(raw_path: Path) -> CleanPage | None:
 
     path: str = data.get("base_path", "")
     title: str = data.get("title", "")
-    fmt: str = data.get("document_type", data.get("schema_name", ""))
+    doc_type: str = data.get("document_type", data.get("schema_name", ""))
+    fmt = _FORMAT_MAP.get(doc_type, doc_type)
     updated_at: str = data.get("public_updated_at", "")[:10]  # ISO date only
     locale: str = data.get("locale", "en")
 
@@ -149,6 +183,9 @@ def clean_page(raw_path: Path) -> CleanPage | None:
             html = str(body)
         text = _html_to_text(html)
         sections = _split_into_sections(text, base_url)
+
+    if not sections and doc_type in _FORMAT_MAP:
+        sections = _split_into_sections(_html_to_text(_fallback_html(data, details)), base_url)
 
     if not sections:
         return None

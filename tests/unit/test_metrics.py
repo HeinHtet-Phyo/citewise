@@ -208,3 +208,14 @@ def test_build_records_attaches_judge_and_error() -> None:
     records = m.build_records(rows, {}, judgements)
     assert records[0]["judge"]["made_up"] is True and records[0]["judge_error"] is False
     assert records[1]["judge"] is None and records[1]["judge_error"] is True
+
+
+def test_cohen_kappa_perfect_and_chance() -> None:
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).parents[2] / "eval"))
+    from judge_agreement import cohen_kappa
+
+    assert cohen_kappa([True, False, True, False], [True, False, True, False]) == 1.0
+    assert cohen_kappa([True, True, False, False], [True, False, True, False]) == 0.0

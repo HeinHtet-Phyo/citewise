@@ -13,7 +13,6 @@ data/processed/
 .llm_cache/
 
 # Results from eval runs — large JSONL files are re-runnable, but summaries are committed
-eval/results/*.jsonl
 # summary_*.json and threshold_*.json are tracked (they prove the numbers in README)
 
 # Python

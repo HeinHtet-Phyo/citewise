@@ -96,7 +96,7 @@ CONFIGS["C_verify"] = _variant("C_verify", "B_v2", verify_claims=True)
 CONFIGS["D_s2b"] = _variant("D_s2b", "C_verify", expand_context=True)
 CONFIGS["E_k10"] = _variant("E_k10", "D_s2b", top_k_context=10)
 CONFIGS["L_dense"] = _variant(
-    "L_dense", "D_s2b", search_mode="dense", use_reranker=False, refusal_threshold=0.0
+    "L_dense", "C_verify", search_mode="dense", use_reranker=False, refusal_threshold=0.0
 )
 
 

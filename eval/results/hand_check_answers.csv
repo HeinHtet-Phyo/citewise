@@ -1,0 +1,124 @@
+question_id,question,answer,deepseek_correctness,deepseek_fully_faithful,deepseek_made_up,gemma_correctness,gemma_fully_faithful,gemma_made_up,all_agree
+q088,What is the pass mark for the driving theory test?,"The pass mark for the multiple-choice part of the driving theory test is 43 out of 50, and the pass mark for the hazard perception part is 44 out of 75 [1]. You must pass both parts to pass the test [1]. This applies to car and motorcycle theory tests [2].",correct,True,False,correct,True,False,True
+q127,Can my employer change my terms and conditions without my agreement?,"No, your employer cannot change your terms and conditions without your agreement. If they do, it may be a breach of contract [1]. Employers can only make changes if you agree, or if the contract includes a flexibility clause that allows reasonable changes [3]. Even then, the changes must be reasonable, and you have the right to challenge them if they are not [1]. In some cases, such as after a business transfer, changes are only allowed for economic, technical, or organisational reasons, and still require your agreement [2]. For pregnant employees, contract changes cannot be made without agreement, and doing so is a breach of contract [6].",correct,True,False,correct,True,False,True
+q019,What is the difference between PIP daily living and mobility components?,"The Personal Independence Payment (PIP) has two components: the daily living part and the mobility part [1].
+
+The daily living part helps with extra costs if you need help with everyday tasks such as preparing food, eating and drinking, managing medicines, washing and bathing, using the toilet, dressing, reading, managing money, socialising, or communicating [1]. The amount depends on how much difficulty you have with these tasks, with a lower rate of £76.70 or a higher rate of £114.60 per week [2].
+
+The mobility part helps if you need support with getting around, such as working out a route, physically moving, or leaving your home [1]. This includes people with cognitive or mental health conditions like anxiety. The mobility part is paid at a lower rate of £30.30 or a higher rate of £80 per week [2].
+
+You can receive one or both parts depending on your needs [1].",correct,True,False,correct,True,False,True
+q193,What documents are required to register a new vehicle under the non-secure registration scheme if I'm not eligible for the secure scheme?,"To register a new vehicle under the non-secure registration scheme, you must submit the following documents:
+
+- Completed form V55/4 [1]  
+- An acceptable vehicle type approval certificate, such as a valid Certificate of Conformity (CoC) or British National Type Approval certificate [1]  
+- The registration fee [1]  
+- The licence fee [1]  
+- A certificate of newness [1]  
+- Approved identity documents confirming your name and address [1]  
+
+All documents should be sent to DVLA, Swansea, SA99 1BE [1].",correct,True,False,correct,True,False,True
+q200,How do I calculate how much Neonatal Care Leave I can take if my baby is in hospital?,"You can get one week of Neonatal Care Leave for every 7 full and continuous days your baby is in neonatal care, up to a maximum of 12 weeks [2]. Neonatal care is care for newborn babies that starts within the first 28 days after birth and may include hospital care or medical care after leaving hospital under a consultant [3].",correct,True,False,correct,True,False,True
+q208,How can I find out what fixed deductions my employer is taking from my pay if they're not on my payslip?,"Your employer can choose to explain fixed deductions, such as repayment of a season ticket loan, either on your payslip or in a separate written statement [4]. If the fixed deductions are not on your payslip, your employer must provide this information in a separate written statement before your first payslip [4]. They must also update this statement every year [4].",correct,True,False,correct,True,False,True
+q068,How do I apply for council housing?,"To apply for council housing, you must apply through your local council [1]. You will usually need to be 18 or over, though some councils allow applications from those aged 16 or over [1]. Each council has its own rules, and you may be able to apply even if you do not live in the area [1].
+
+You will typically be placed on a waiting list and are not guaranteed a property [1]. Councils use a ‘points’ or ‘banding’ system based on housing need, such as being homeless, living in overcrowded conditions, or having a medical condition worsened by your current home [1].
+
+Some councils operate a choice-based letting scheme, allowing you to bid for available properties online, by phone, or by text [1]. You can find properties through local papers, council websites, council offices, or local libraries [1].",correct,True,False,correct,True,False,True
+q149,What is the penalty for using a mobile phone while driving?,"The penalty for using a mobile phone while driving is 6 penalty points and a £200 fine [1]. You may also receive a fixed penalty notice from the police [2]. If you passed your driving test in the last 2 years, you will lose your licence [1]. Additionally, using a mobile phone while driving can result in 3 to 6 penalty points under the construction and use offence code CU80 [3].",correct,True,False,correct,True,False,True
+q034,What counts as a couple for Universal Credit purposes?,"For Universal Credit purposes, two people are counted as a couple if they live in the same household and are:
+
+- married to each other  
+- civil partners of each other  
+- living together as if they are married  
+
+This applies regardless of whether both partners are eligible for Universal Credit [1][3].",correct,True,False,correct,True,False,True
+q218,Should I claim PIP or Attendance Allowance given my savings and health?,"You can claim Personal Independence Payment (PIP) if you are 16 or over, have a long-term health condition or disability, and expect difficulties with daily living or mobility to last at least 12 months [1]. Your savings do not affect your eligibility for PIP, and you can claim it whether or not you are working [1].
+
+However, if you are over State Pension age, you cannot usually make a new claim for PIP and should instead claim Attendance Allowance [1]. Attendance Allowance is for people at State Pension age or older who need help with personal care due to a disability or health condition [6].
+
+Therefore, your eligibility depends on your age:
+
+- If you are under State Pension age, claim PIP [1].
+- If you are at or over State Pension age, claim Attendance Allowance [1].
+
+In both cases, your savings do not disqualify you [1].",n/a,False,True,partly,True,False,False
+q169,"Can a flexible tenant with a 3-year tenancy buy their council home, and what should they do if the council refuses to renew their tenancy?","A flexible tenant with a 3-year tenancy cannot buy their council home because they must be a secure tenant and have had a public sector landlord for at least 5 years to qualify for the Right to Buy scheme [4]. Flexible tenants are not automatically secure tenants, and a 3-year tenancy does not meet the 5-year qualifying period required [4].
+
+If the council refuses to renew their tenancy, the council must explain their reasons and give the tenant a chance to challenge the decision [1].",partly,False,True,partly,False,False,False
+q213,What are the requirements for claiming Child Benefit if I move to the UK from outside the EU and my child lives abroad?,"You usually will not qualify for Child Benefit if you are moving to the UK from outside the EU, Switzerland, Norway, Iceland, or Liechtenstein and your child does not live with you [1]. To claim Child Benefit, you must generally live in the UK as your main home (with your child living with you), and have the right to reside in the UK [1]. If your child lives abroad, these conditions are typically not met, making you ineligible [1]. 
+
+I cannot find sufficient information in the guidance to confirm any exceptions for this specific scenario.",partly,False,True,correct,True,False,False
+q185,"If I have an arteriovenous malformation in the upper part of my brain that was treated with craniotomy, do I need to inform DVLA when holding a car licence?","Yes, you must inform the DVLA if you have an arteriovenous malformation in the upper part of your brain (supratentorial) that was treated by craniotomy and you hold a car or motorcycle licence [1].",correct,True,False,correct,True,False,True
+q096,What is a blue badge and who is eligible?,"A Blue Badge is a scheme that provides a range of parking benefits for disabled people with severe walking difficulties, whether they travel as drivers or passengers [1]. 
+
+To be eligible, a person must have severe walking difficulties. Specific eligibility includes receiving certain disability benefits, such as the higher or enhanced rate mobility component of Disability Living Allowance (DLA), Personal Independence Payment (PIP), Adult Disability Payment (ADP), Scottish Adult Disability Living Allowance, Child Disability Payment, War Pensioners’ Mobility Supplement, or Armed Forces Independence Payment [1]. 
+
+Additionally, if someone gets the mobility part of Personal Independence Payment (PIP), they might also be eligible for a Blue Badge [2].",correct,False,True,correct,True,False,False
+q157,How can I claim a pension if my partner died as a result of their service in the armed forces before 6 April 2005?,"You may be entitled to the War Widow(er) Pension if your partner died as a result of their service in the armed forces before 6 April 2005 [1]. To claim, you should download the claim form and send it to:
+
+Veterans UK  
+Norcross  
+Thornton Cleveleys  
+Lancashire  
+FY5 3WP [3]
+
+You may also be eligible for a funeral expense grant of up to £2,200 if the death was due to service before 6 April 2005, provided you claim within 3 months of the funeral [3].",correct,True,False,correct,True,False,True
+q025,Can I defer my State Pension?,"Yes, you can defer your State Pension. If you do not claim it when you reach State Pension age, it will automatically defer without you needing to take any action [1]. Depending on when you reach State Pension age, you can choose to receive the deferred amount as a one-off payment, increased regular payments, or in some cases, both [2][3]. However, you cannot build up deferred State Pension during periods when you or your partner are receiving certain benefits [4].",correct,True,False,correct,True,False,True
+q151,"If I have severe arthritis and need to use special controls to drive, what must I do to stay compliant with DVLA regulations?","If you have severe arthritis and need to use special controls to drive, you must inform the DVLA about your condition and the use of special controls [1]. You can do this online or by filling in form G1 and sending it to DVLA [1]. If you hold a bus, coach, or lorry licence, you must fill in form G1V instead [1]. 
+
+DVLA will assess your condition and may require you to have a shorter licence or make vehicle adaptations [2]. The licence will be coded to reflect any vehicle modifications [3]. You should also consult your doctor if you are unsure whether your arthritis affects your driving or whether you need to notify DVLA [1]. 
+
+Failure to report your condition could result in a fine of up to £1,000 or prosecution if you are involved in an accident [1].",correct,True,False,correct,True,False,True
+q005,How do I make a new claim for Universal Credit?,"You can make a new claim for Universal Credit online by creating an account and completing your claim within 28 days [1]. If you live with your partner, you both need to create accounts and link them together using a partner linking code to make a joint claim [3]. 
+
+If you cannot claim online, you can claim by phone through the Universal Credit helpline [1]. 
+
+When applying, you will need your bank or building society account details, an email address, access to a phone, and identity documents such as a driving licence or Biometric Residence Permit [6]. 
+
+Your claim starts on the date you submit it in your account [1].",partly,False,False,correct,True,False,False
+q197,How can I switch from paying vehicle tax by Direct Debit every 6 months to paying monthly instead?,"To switch from paying vehicle tax by Direct Debit every 6 months to paying monthly, you must cancel your current Direct Debit and then re-tax your vehicle with a new monthly Direct Debit. 
+
+First, contact your bank or building society to cancel the existing Direct Debit [1]. You can continue using the vehicle until the date the next payment was due [1]. 
+
+On the first day of the month when the next payment was due, re-tax the vehicle using the 11-digit number from your vehicle log book (V5C) [1]. When taxing, choose the Direct Debit option and select monthly payments [1]. 
+
+Note that paying monthly includes a 5% surcharge [2].",correct,True,False,correct,True,False,True
+q146,What is the new driver period after passing the driving test?,"The new driver period after passing the driving test is 2 years. During this time, if a new driver accumulates 6 or more penalty points, their licence will be cancelled [1].",correct,True,False,correct,True,False,True
+q207,How much financial support can I get for installing an electric vehicle chargepoint if I'm a renter and what evidence do I need to prove I own or use an eligible vehicle?,"You can get 75% off the cost of buying and installing a chargepoint socket, up to a maximum of £500 [2].
+
+To prove you own or use an eligible vehicle, you must provide evidence such as:
+
+- Being a registered owner  
+- Leasing the vehicle for at least 6 months  
+- Using it as a work vehicle for at least 6 months  
+- Having the vehicle on order  
+
+If you lease the vehicle, you must also show your installer proof of the lease, and the lease must meet specific requirements, including ownership of the chargepoint after payment and listing the cost of the chargepoint and installation [3].",correct,False,False,correct,True,False,False
+q183,What types of costs can I claim if someone fails to attend a site visit during my planning appeal?,"You can claim costs directly related to your appeal if someone fails to attend a site visit, such as time spent preparing for the appeal, attending the site visit, or using consultants to provide technical advice [1]. Claims for costs must be made within 7 days of the site visit if the issue is non-attendance [2]. You cannot claim costs relating to your original planning application [1].",partly,False,True,partly,False,False,False
+q027,Can I claim Carer's Allowance if I work part-time?,"Yes, you can claim Carer’s Allowance if you work part-time, as long as you spend at least 35 hours a week caring for someone [2]. Your employment status does not stop you from claiming, but you must meet the care requirement and other eligibility conditions [5].",correct,True,False,correct,True,False,True
+q030,What is Tax-Free Childcare and how does it work?,"Tax-Free Childcare (TFC) is a government scheme that helps working parents with the cost of childcare [2]. To use it, parents must set up an online childcare account, which both they and the government pay into [2]. For every £8 a parent pays into the account, the government adds £2 [2]. 
+
+The government’s total contribution is capped at £500 every three months (up to £2,000 per year) per child, or £1,000 every three months (up to £4,000 per year) if the child is disabled [2]. The child must be 11 or younger (or 16 or younger if disabled), and the parent must usually be working or returning to work [2]. 
+
+Parents must use a childcare provider that is signed up to the TFC scheme [2]. To keep receiving support, parents must sign in to their account every three months to confirm their details are up to date [3].",correct,True,False,correct,True,False,True
+q013,What is the rate of Statutory Maternity Pay?,"Statutory Maternity Pay (SMP) is paid for up to 39 weeks. For the first 6 weeks, it is 90% of the employee’s average weekly earnings before tax. For the next 33 weeks, it is £194.32 or 90% of their average weekly earnings, whichever is lower [1]. Tax and National Insurance are deducted from these payments [1].",correct,True,False,correct,True,False,True
+q106,What is a Budgeting Loan and who can apply?,"A Budgeting Loan is an interest-free loan from the government to help people on certain benefits pay for things like furniture, household items, clothes, rent in advance, moving costs, home improvements, travel within the UK, job-related costs, maternity expenses, funeral costs, or repaying hire purchase loans [5]. You only have to pay back the amount you borrow, and repayments are taken automatically from your benefits [2].
+
+To apply, you must have been receiving one or more of the following benefits for the past 6 months: Income Support, income-based Jobseeker’s Allowance, income-related Employment and Support Allowance, or Pension Credit [3]. If you moved from Universal Credit to Pension Credit, the time on Universal Credit counts towards the 6 months [3].
+
+You cannot apply if you currently get Universal Credit, New Style Jobseeker’s Allowance, or New Style Employment and Support Allowance — instead, you should apply for a Budgeting Advance if you’re on Universal Credit [1][3]. You also cannot apply if you’re involved in industrial action or if you owe more than £1,500 in total for previous Crisis Loans and Budgeting Loans [3].",partly,False,False,correct,True,False,False
+q172,"What pro rata benefit should a part-time worker receive if they work half the hours of a full-time worker who gets a £1,000 Christmas bonus?",A part-time worker who works half the hours of a full-time worker should receive a pro rata Christmas bonus of £500 [1].,correct,True,False,correct,True,False,True
+q123,Can I be dismissed for taking part in a lawful strike?,"No, you cannot be dismissed for taking part in a lawful strike. If the industrial action is protected — meaning the union followed the legal rules for balloting and giving notice — then your employer may face an unfair dismissal claim if they dismiss you for taking part [3]. Dismissal for participating in lawful industrial action is likely to be considered unfair [6].",partly,False,False,correct,True,False,False
+q014,Am I entitled to paid paternity leave?,"You may be entitled to paid paternity leave if you meet the eligibility criteria for Statutory Paternity Pay and Leave. To qualify, you must:
+
+- Be taking time off to look after the child and be one of the following: the father, the husband or partner of the mother (or adopter), the child’s adopter, or an intended parent in a surrogacy arrangement [6].
+- Be an employee [6].
+- Have been continuously employed by your employer for at least 26 weeks up to the end of the 15th week before the baby is due (the ‘qualifying week’) [6]. This is different for adoption [3].
+- Earn an average of at least £129 a week (before tax) [6].
+- Give the correct notice [6].
+
+If you meet these conditions, you are entitled to 2 weeks’ Paternity Leave and Statutory Paternity Pay [1]. If you do not qualify, your employer must inform you within 28 days using form SPP1 [6].
+
+Your employment rights, including pay rises and accrual of holiday, are protected during paternity leave [1].",partly,False,False,partly,True,False,False
+q063,What is constructive dismissal?,"Constructive dismissal occurs when an employee resigns because their employer has breached their employment contract, either through a single serious incident or a series of less serious incidents taken together [2]. This breach could include actions such as not paying the employee, unlawfully demoting them, allowing harassment or bullying, forcing unreasonable changes to working conditions, or making them work in dangerous conditions [2]. The employee must leave the job due to these serious issues, and staying in the role may be seen as accepting the conduct [1]. A constructive dismissal is not automatically unfair, but it can lead to claims for unfair or wrongful dismissal [2].",correct,True,False,correct,True,False,True

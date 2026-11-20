@@ -1,0 +1,8 @@
+config,adversarial_pass_rate_pct,adversarial_pass_rate_pct_n,answer_correct_pct_of_answerable,answer_correct_pct_of_answerable_n,answer_correct_pct_of_answered,answer_correct_pct_of_answered_n,answer_partly_correct_pct_of_answerable,answer_partly_correct_pct_of_answered,citation_correct_pct,citation_correct_pct_n,cost_per_answer_gbp,false_refusal_rate_pct,false_refusal_rate_pct_n,fully_faithful_pct,fully_faithful_pct_n,generation_errors,judge_errors_excluded,latency_p50_ms,latency_p95_ms,made_up_rate_pct,made_up_rate_pct_n,mrr,mrr_n,n_questions,refusal_recall_pct,refusal_recall_pct_n,retrieval_hit_rate_at_6_pct,retrieval_hit_rate_at_6_pct_n
+hybrid_400_rerank,100.0,5,80.9,47,82.6,46,17.0,17.4,89.1,46,0.000364,2.1,47,84.8,46,0,0,1086,2038,6.5,46,0.756,47,62,100.0,15,89.4,47
+B_v2,100.0,5,74.5,47,76.1,46,23.4,23.9,89.1,46,0.000385,2.1,47,82.6,46,0,0,1676,3034,13.0,46,0.756,47,62,100.0,15,89.4,47
+C_verify,100.0,5,70.2,47,75.0,44,21.3,22.7,90.9,44,0.000578,6.4,47,90.9,44,0,0,852,2999,4.5,44,0.756,47,62,100.0,15,89.4,47
+D_s2b,100.0,5,63.8,47,69.8,43,25.5,27.9,88.4,43,0.000995,8.5,47,86.0,43,0,0,2565,5984,7.0,43,0.756,47,62,100.0,15,89.4,47
+E_k10,100.0,5,66.0,47,73.8,42,21.3,23.8,95.2,42,0.001499,10.6,47,90.5,42,0,0,2898,5943,4.8,42,0.756,47,62,100.0,15,89.4,47
+L_dense,100.0,5,72.3,47,75.6,45,23.4,24.4,86.7,45,0.000581,4.3,47,86.7,45,0,0,1446,3319,6.7,45,0.712,47,62,100.0,15,87.2,47
+dense_400,80.0,5,80.9,47,82.6,46,17.0,17.4,87.0,46,0.000365,2.1,47,72.3,47,0,0,812,3024,12.8,47,0.712,47,62,93.3,15,87.2,47

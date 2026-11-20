@@ -1,0 +1,17 @@
+{
+  "config": "hybrid_400_rerank",
+  "second_model": "openai/google/gemma-3-27b-it",
+  "n": 30,
+  "correctness": {
+    "agreement_pct": 83.3,
+    "kappa": 0.5
+  },
+  "fully_faithful": {
+    "agreement_pct": 73.3,
+    "kappa": 0.25
+  },
+  "made_up": {
+    "agreement_pct": 83.3,
+    "kappa": 0.0
+  }
+}

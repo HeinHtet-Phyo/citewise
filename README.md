@@ -125,10 +125,10 @@ not fit Render's 512 MB free tier.
 
 | Deployed config | Idle | Peak (10 requests) | Cold start | First request |
 |---|---|---|---|---|
-| L2_dense (same models as L_dense) | 245.1 MiB | 375.0 MiB | 2.9 s | 2.2 s |
+| L2_dense, Langfuse tracing on | 247.3 MiB | 377.6 MiB | 3.4 s | 4.5 s |
 | hybrid_400_rerank | 245.4 MiB | 1,944.6 MiB | 1.7 s | n/a |
 
-Measured locally in Docker for `L_dense` (`eval/results/memory.json`); `L2_dense` only changes a prompt. On Render's free tier after about 17 minutes idle, the first health response took 56.3 s, the first question after that 10.7 s, and the next 2.7 s (one measurement, `eval/results/render_cold_start.json`).
+Measured locally in Docker (`eval/results/memory.json`, `scripts/measure_memory.py`) with live LLM calls and tracing enabled, which leaves about 134 MiB of headroom under Render's 512 MB. On Render's free tier after about 17 minutes idle, the first health response took 56.3 s, the first question after that 10.7 s, and the next 2.7 s (one measurement, `eval/results/render_cold_start.json`).
 
 **Stack:** Python 3.11 · FastAPI · Pydantic v2 · Qdrant · fastembed · LiteLLM · Nebius
 (Qwen3-235B generator, Qwen3-30B verifier, DeepSeek-V4.1-Flash judge) · Docker · GitHub Actions.
@@ -155,7 +155,7 @@ with root causes, for example:
 
 ## Engineering
 
-- 112 tests (unit and integration), `ruff`, `mypy --strict`, run in GitHub Actions on every push.
+- 120 tests (unit and integration), `ruff`, `mypy --strict`, run in GitHub Actions on every push.
 - An optional smoke-eval CI job runs only when a `NEBIUS_API_KEY` repository secret is set.
 - Rate limit (10 per minute per client, keyed on `X-Forwarded-For` behind Render's proxy) and a daily spend cap that returns HTTP 503 when exhausted.
 - Embedding and reranker models are baked into the Docker image so there is no download at start-up.

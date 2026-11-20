@@ -13,6 +13,7 @@ from citewise.config import RagConfig
 from citewise.generate import context_text, generate_answer
 from citewise.guardrails import check_evidence, check_input, drop_sentences, verify_claims
 from citewise.models import Answer, Citation
+from citewise.observability import begin_trace, finish_trace, note, trace_span
 from citewise.retrieve import RetrievedChunk, retrieve
 
 log = logging.getLogger(__name__)
@@ -89,6 +90,15 @@ def _verify_and_repair(
 
 
 def answer_question(question: str, config: RagConfig) -> Answer:
+    """Run the pipeline under one optional Langfuse trace (a no-op without keys)."""
+    trace_id = uuid.uuid4().hex
+    recorder = begin_trace(trace_id, question)
+    answer = _run_pipeline(question, config, trace_id)
+    finish_trace(recorder, answer)
+    return answer
+
+
+def _run_pipeline(question: str, config: RagConfig, trace_id: str) -> Answer:
     """Run the full RAG pipeline and return a structured Answer.
 
     Steps:
@@ -100,21 +110,35 @@ def answer_question(question: str, config: RagConfig) -> Answer:
     6. Return a fully populated Answer.
     """
     t0 = time.monotonic()
-    trace_id = str(uuid.uuid4())
 
     # 1. Input guardrail
-    safe, refusal_reason = check_input(question)
+    with trace_span("guardrails") as meta:
+        safe, refusal_reason = check_input(question)
+        meta["safe"] = safe
+        meta["refusal_reason"] = refusal_reason
     if not safe:
         log.info("Input refused (%s): %.60s", refusal_reason, question)
         return _refused_answer(question, refusal_reason or "unsafe", config, 0, trace_id)
 
     # 2. Retrieve
-    chunks = retrieve(question, config)
+    with trace_span(
+        "retrieval",
+        search_mode=config.search_mode,
+        reranker=config.use_reranker,
+        top_k=config.top_k_retrieve,
+    ) as meta:
+        chunks = retrieve(question, config)
+        meta["retrieved_urls"] = [rc.chunk.url for rc in chunks]
+        meta["scores"] = [round(rc.score, 4) for rc in chunks]
+    note(retrieved_urls=[rc.chunk.url for rc in chunks])
     log.info("Retrieved %d chunks for: %.60s", len(chunks), question)
 
     # 3. Evidence guardrail
-    top_score = chunks[0].score if chunks else 0.0
-    refuse, evidence_reason = check_evidence(top_score, config.refusal_threshold)
+    with trace_span("context", top_k_context=config.top_k_context) as meta:
+        top_score = chunks[0].score if chunks else 0.0
+        refuse, evidence_reason = check_evidence(top_score, config.refusal_threshold)
+        meta["top_score"] = round(top_score, 4)
+        meta["refused"] = refuse
     if refuse or not chunks:
         latency_ms = int((time.monotonic() - t0) * 1000)
         return _refused_answer(
@@ -126,7 +150,8 @@ def answer_question(question: str, config: RagConfig) -> Answer:
         )
 
     # 4. Generate
-    answer_text, cost_gbp, _ = generate_answer(question, chunks, config)
+    with trace_span("generation", model=config.llm_model, prompt=config.prompt_version):
+        answer_text, cost_gbp, _ = generate_answer(question, chunks, config)
 
     # 5. Detect LLM-level refusal
     refused = answer_text.strip().startswith(_REFUSAL_PREFIX)
@@ -135,9 +160,11 @@ def answer_question(question: str, config: RagConfig) -> Answer:
     # 5b. Verify claims against the sources; repair once, then drop what is still unsupported
     verifier_path: str | None = None
     if config.verify_claims and not refused:
-        answer_text, extra_cost, verifier_path = _verify_and_repair(
-            question, answer_text, chunks, config
-        )
+        with trace_span("claim_verification") as meta:
+            answer_text, extra_cost, verifier_path = _verify_and_repair(
+                question, answer_text, chunks, config
+            )
+            meta["verifier_path"] = verifier_path
         cost_gbp += extra_cost
         if verifier_path == "refused":
             refused, refusal_reason_out = True, "unsupported_claims"

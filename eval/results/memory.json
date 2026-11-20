@@ -11,5 +11,12 @@
     "idle_mib": 245.4,
     "peak_mib_during_10_requests": 1944.6,
     "after_10_requests_mib": 1944.6
+  },
+  "L2_dense": {
+    "cold_start_to_health_s": 3.4,
+    "first_request_s": 4.5,
+    "idle_mib": 247.3,
+    "peak_mib_during_10_requests": 377.6,
+    "after_10_requests_mib": 377.1
   }
 }

@@ -13,6 +13,7 @@ import litellm
 from litellm.exceptions import RateLimitError, ServiceUnavailableError, Timeout
 
 from citewise.config import RagConfig, settings
+from citewise.observability import record_llm
 from citewise.retrieve import RetrievedChunk
 
 log = logging.getLogger(__name__)
@@ -96,6 +97,7 @@ def generate_answer(
         if cached.exists():
             log.debug("LLM cache hit: %s", cache_key[:12])
             data = json.loads(cached.read_text(encoding="utf-8"))
+            record_llm("llm.generation", config.llm_model, None, None, data["cost_gbp"], 0)
             return data["text"], data["cost_gbp"], 0
 
     # Route API credentials: Nebius models start with "openai/", Gemini otherwise.
@@ -154,6 +156,15 @@ def generate_answer(
             ) * _out
     cost_gbp = round(cost_usd * _USD_TO_GBP, 6)
 
+    usage = response.usage
+    record_llm(
+        "llm.generation",
+        config.llm_model,
+        usage.prompt_tokens if usage else None,
+        usage.completion_tokens if usage else None,
+        cost_gbp,
+        latency_ms,
+    )
     log.info("LLM %s: %d ms, $%.6f (£%.6f)", config.llm_model, latency_ms, cost_usd, cost_gbp)
 
     if settings.llm_cache_enabled:

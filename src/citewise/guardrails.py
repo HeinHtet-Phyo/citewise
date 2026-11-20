@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from pathlib import Path
 
 import litellm
 
 from citewise.config import settings
 from citewise.generate import _cache_path, _prompt_hash
+from citewise.observability import record_llm
 
 # Patterns that indicate a question is unsafe or a prompt injection attempt.
 _UNSAFE_RE = re.compile(
@@ -106,7 +108,9 @@ def verify_claims(answer: str, sources: list[str]) -> tuple[list[str], float]:
     if settings.llm_cache_enabled and path.exists():
         text = json.loads(path.read_text(encoding="utf-8"))["text"]
         cost = 0.0
+        record_llm("llm.claim_verification", _VERIFY_MODEL, None, None, 0.0, 0)
     else:
+        t0 = time.monotonic()
         try:
             response = litellm.completion(
                 model=_VERIFY_MODEL,
@@ -128,6 +132,14 @@ def verify_claims(answer: str, sources: list[str]) -> tuple[list[str], float]:
             )
             * _USD_TO_GBP,
             6,
+        )
+        record_llm(
+            "llm.claim_verification",
+            _VERIFY_MODEL,
+            usage.prompt_tokens,
+            usage.completion_tokens,
+            cost,
+            int((time.monotonic() - t0) * 1000),
         )
         if settings.llm_cache_enabled:
             Path(settings.llm_cache_dir).mkdir(parents=True, exist_ok=True)

@@ -170,7 +170,7 @@ Tracing is off unless `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` are set. W
 - Deterministic Qdrant point IDs (`uuid5` of the chunk id) so re-indexing never duplicates.
 - LLM responses are cached on disk during development; cost per answer is tracked.
 
-Spend: the headline configs cost about £0.0004 to £0.0006 per answer (the larger-context dev experiments up to £0.0015). Generation and verification in the logged runs came to about £0.41 (`docs/eval_method.md`) and building the questions about $0.10 (`eval/questions/verification_report.json`); judge and AI-check calls are not metered [TBC].
+Spend: the headline configs cost about £0.0004 to £0.0006 per answer (the larger-context dev experiments up to £0.0015). Generation and verification in the logged runs came to about £0.41 (`docs/eval_method.md`) and building the questions about $0.10 (`eval/questions/verification_report.json`); judge and AI-check calls are not separately metered.
 
 ## Project structure
 

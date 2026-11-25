@@ -27,3 +27,13 @@ Judge errors excluded from judged metrics: {'hybrid_400_rerank': 0, 'B_v2': 0, '
 Judge errors excluded from judged metrics: {'hybrid_400_rerank': 0, 'dense_400': 0, 'L_dense': 0, 'L2_dense': 0}
 
 Denominators: 'answerable' counts refusals as not correct; 'answered' covers only non-refused answers. 'Partly' means exactly the judge verdict 'partly'. Latency and cost cover non-refused answers. n/a means the denominator was empty.
+
+## 95% bootstrap confidence intervals (test split, 1,000 resamples, seed 42)
+
+| Config | Correct | Made-up | Fully faithful | Refusal recall | False refusal |
+|---|---|---|---|---|---|
+| hybrid_400_rerank | 73.5% [64.3–82.0%] | 20.0% [12.1–28.2%] | 71.6% [62.6–80.9%] | 96.7% [89.3–100.0%] | 4.1% [1.0–8.0%] |
+| dense_400 | 69.4% [60.0–78.4%] | 8.3% [3.2–14.3%] | 83.3% [75.2–90.5%] | 93.3% [82.6–100.0%] | 4.1% [1.0–8.2%] |
+| L2_dense | 65.3% [55.7–74.2%] | 7.4% [2.9–12.9%] | 83.0% [75.9–90.4%] | 96.7% [88.9–100.0%] | 5.1% [1.1–10.2%] |
+
+Computed by `scripts/bootstrap_cis.py`. See `eval/results/bootstrap_cis_test.json` for full output.

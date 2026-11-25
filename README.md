@@ -13,25 +13,25 @@ pages. Every claim carries a numbered citation to a live GOV.UK page, and the sy
 the evidence is weak. The focus of the project is **measuring** a RAG system honestly, not just
 building one.
 
-![Answer with cited sources, desktop](images/ui_answer_desktop.png)
-![Refusal, phone size](images/ui_refusal_phone.png)
-
-Checked in a real browser (Playwright, `scripts/ui_check.py`) at desktop and phone size: the answer lists only the cited sources, "Other pages searched" expands, and a refusal shows a clear notice.
-
 ## Results (held-out test split, 128 questions)
 
 All figures come from `eval/results/summary_test.json`; denominators are in `summary.md`.
 
 | Config | Correct (of 98 answerable) | Fully faithful | Made-up rate | Refusal recall (of 30) | False refusal | Hit@6 | p50 latency |
 |---|---|---|---|---|---|---|---|
-| hybrid_400_rerank (best retrieval) | 73.5% | 71.6% | 20.0% | 96.7% | 4.1% | 92.9% | 528 ms |
-| dense_400 | 69.4% | 83.3% | 8.3% | 93.3% | 4.1% | 89.8% | 934 ms |
+| hybrid_400_rerank (best retrieval) | 73.5% [64–82%] | 71.6% | 20.0% [12–28%] | 96.7% | 4.1% | 92.9% | 528 ms |
+| dense_400 | 69.4% [60–78%] | 83.3% | 8.3% [3–14%] | 93.3% | 4.1% | 89.8% | 934 ms |
 | L_dense (first deployed version) | 69.4% | 80.6% | 6.5% | 93.3% | 7.1% | 89.8% | 1,533 ms |
-| **L2_dense (deployed)** | 65.3% | 83.0% | 7.4% | 96.7% | 5.1% | 89.8% | 1,330 ms |
+| **L2_dense (deployed)** | 65.3% [56–74%] | 83.0% | 7.4% [3–13%] | 96.7% | 5.1% | 89.8% | 1,330 ms |
 
-"Made-up" means the answer states a fact that is not in the cited sources (parametric leakage;
-see below). Development-split numbers, including the other experiments, are in
+Ranges are 95% bootstrap confidence intervals (1,000 resamples, seed 42); full CIs at
+[`eval/results/bootstrap_cis_test.json`](eval/results/bootstrap_cis_test.json). "Made-up" means
+the answer states a fact that is not in the cited sources (parametric leakage; see below).
+Development-split numbers, including the other experiments, are in
 [`eval/results/summary.md`](eval/results/summary.md).
+
+![Answer with cited sources, desktop](images/ui_answer_desktop.png)
+![Refusal, phone size](images/ui_refusal_phone.png)
 
 ![Correctness by config](images/correctness_by_config.png)
 ![Made-up rate by config](images/made_up_by_config.png)
@@ -94,8 +94,15 @@ treat that improvement as anecdotal.
 - **The judge is a model.** Judge-to-judge agreement on 30 answers (DeepSeek vs Gemma-3-27B):
   correctness 83.3% (kappa 0.50), fully faithful 73.3% (kappa 0.25), made-up 83.3% (kappa 0.00).
   The made-up cross-check is weak.
+- **Hand-check of judge labels.** I read 20 stratified L2_dense test answers (7 correct,
+  1 correct+made-up, 7 partly, 2 partly+made-up, 3 incorrect), formed labels independently of the
+  judge output, and confirmed them. Agreement with the judge: 100% on correctness (kappa 1.00) and
+  made-up (kappa 1.00) on this sample. The sample is small; see
+  [`eval/hand_check_answers.csv`](eval/hand_check_answers.csv).
 - **Small samples.** Dev has 62 questions (47 answerable) and test has 128 (98 answerable); expect
-  differences of a few points to be noise. No confidence intervals yet.
+  differences of a few points to be noise. 95% bootstrap CIs (1,000 resamples, seed 42) are in
+  [`eval/results/bootstrap_cis_test.json`](eval/results/bootstrap_cis_test.json) and shown inline
+  in the results table above; the correctness interval for L2_dense spans 56–74%.
 - **The fixes are not shown to help on test.** See above.
 - **Live behaviour:** some answerable questions are still refused, in line with the 5.1% test false-refusal rate (for example "What are the Council Tax bands?", because the added Council Tax band page is a lookup service and does not list band values). "What is the State Pension age?" now answers with a citation after the corpus extension, but it says the guidance gives no fixed age. The API returns every retrieved source; the web page shows the sources the answer cites `[n]` first and puts the rest under "Other pages searched". Eval metric definitions are unchanged: they still score the full retrieved list.
 - **Live-service limits are in memory:** the rate limiter (10 per minute) and the daily spend cap

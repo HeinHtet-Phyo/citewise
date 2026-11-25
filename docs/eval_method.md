@@ -48,6 +48,21 @@ Reading it honestly: the two models mostly agree on correctness, agree less on f
 made-up kappa of 0.00 means Gemma almost never flagged an answer as made up, so Gemma is a weak
 cross-check for that metric. This shows how consistent two models are, not that either is right.
 
+### Hand-check of judge labels (judge-to-human)
+
+20 L2_dense test answers were sampled stratified by judge verdict (7 correct, 1 correct+made-up,
+7 partly, 2 partly+made-up, 3 incorrect), read against the question, the retrieved snippets, and
+the reference answer, and labelled independently of the automated judge. Labels were then confirmed
+by the project author. Results in `eval/hand_check_answers.csv`.
+
+| Field | Agreement | Cohen's kappa | n |
+|---|---|---|---|
+| Correctness (correct / partly / incorrect) | 100% | 1.00 | 20 |
+| Made-up flag (binary) | 100% | 1.00 | 20 |
+
+This is a small, non-random sample. It suggests the judge labels are well-calibrated on these 20
+cases but cannot generalise to the full test set.
+
 ## Metrics
 
 Retrieval: hit rate at 6 (a gold URL is in the context) and MRR. Answers: correct, partly correct,
@@ -74,4 +89,4 @@ Treat differences under about 5 points as noise.
 
 Generation and verification cost for every run in `eval/results/` sums to about £0.41 (from the
 `cost_gbp` field of each answer). Question building cost $0.10 (`verification_report.json`).
-Judge and AI-check costs were not separately metered: [TBC].
+Judge and AI-check costs were not separately metered.

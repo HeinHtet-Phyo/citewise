@@ -1,0 +1,95 @@
+{
+  "L2_dense": {
+    "point": {
+      "correctness": 65.3,
+      "made_up": 7.4,
+      "fully_faithful": 83.0,
+      "refusal_recall": 96.7,
+      "false_refusal": 5.1
+    },
+    "ci_95": {
+      "correctness": [
+        55.7,
+        74.2
+      ],
+      "made_up": [
+        2.9,
+        12.9
+      ],
+      "fully_faithful": [
+        75.9,
+        90.4
+      ],
+      "refusal_recall": [
+        88.9,
+        100.0
+      ],
+      "false_refusal": [
+        1.1,
+        10.2
+      ]
+    }
+  },
+  "dense_400": {
+    "point": {
+      "correctness": 69.4,
+      "made_up": 8.3,
+      "fully_faithful": 83.3,
+      "refusal_recall": 93.3,
+      "false_refusal": 4.1
+    },
+    "ci_95": {
+      "correctness": [
+        60.0,
+        78.4
+      ],
+      "made_up": [
+        3.2,
+        14.3
+      ],
+      "fully_faithful": [
+        75.2,
+        90.5
+      ],
+      "refusal_recall": [
+        82.6,
+        100.0
+      ],
+      "false_refusal": [
+        1.0,
+        8.2
+      ]
+    }
+  },
+  "hybrid_400_rerank": {
+    "point": {
+      "correctness": 73.5,
+      "made_up": 20.0,
+      "fully_faithful": 71.6,
+      "refusal_recall": 96.7,
+      "false_refusal": 4.1
+    },
+    "ci_95": {
+      "correctness": [
+        64.3,
+        82.0
+      ],
+      "made_up": [
+        12.1,
+        28.2
+      ],
+      "fully_faithful": [
+        62.6,
+        80.9
+      ],
+      "refusal_recall": [
+        89.3,
+        100.0
+      ],
+      "false_refusal": [
+        1.0,
+        8.0
+      ]
+    }
+  }
+}

@@ -105,6 +105,21 @@ def test_daily_budget_blocks_after_cap() -> None:
     assert budget.exhausted()
 
 
+def test_daily_budget_resets_at_utc_midnight(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Spend accumulated on day 1 is cleared when UTC date advances to day 2."""
+    from citewise.api.budget import DailyBudget
+
+    monkeypatch.setattr(DailyBudget, "_today", staticmethod(lambda: "2024-01-01"))
+    budget = DailyBudget(cap_gbp=0.001)
+    budget.add(0.001)
+    assert budget.exhausted()
+
+    monkeypatch.setattr(DailyBudget, "_today", staticmethod(lambda: "2024-01-02"))
+    assert not budget.exhausted()
+    assert budget._spent == 0.0
+    assert budget._day == "2024-01-02"
+
+
 def test_rate_limit_uses_forwarded_address() -> None:
     from starlette.requests import Request
 

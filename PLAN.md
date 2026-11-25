@@ -287,42 +287,36 @@ Exact pinned versions will be in `pyproject.toml` after `uv pip compile` or equi
 
 ---
 
+## Final numbers (test split, 128 questions)
+
+| Config | Correct | Fully faithful | Made-up | Refusal recall | False refusal | Hit@6 | p50 ms |
+|---|---|---|---|---|---|---|---|
+| hybrid_400_rerank | 73.5% [64–82%] | 71.6% | 20.0% [12–28%] | 96.7% | 4.1% | 92.9% | 528 |
+| dense_400 | 69.4% [60–78%] | 83.3% | 8.3% [3–14%] | 93.3% | 4.1% | 89.8% | 934 |
+| **L2_dense (deployed)** | **65.3% [56–74%]** | **83.0%** | **7.4% [3–13%]** | **96.7%** | **5.1%** | **89.8%** | **1,330** |
+
+95% bootstrap CIs (1,000 resamples, seed 42). Full CIs in `eval/results/bootstrap_cis_test.json`.
+
 ## Budget tracker
 
-| Phase | Estimated Nebius cost | Actual |
-|-------|-----------------------|--------|
-| Phase 4 candidate generation | ~$0.50 | [TBC] |
-| Phase 5 dev experiments (A–E) | ~$3–8 | [TBC] |
-| Phase 5 test run | ~$2–5 | [TBC] |
-| **Total** | **<$30** | **[TBC]** |
+| Phase | Actual |
+|-------|--------|
+| Question generation (Qwen3-235B) | ~$0.10 |
+| Dev + test eval runs (Qwen3-235B generator + Qwen3-30B verifier) | ~£0.41 |
+| Judge calls (DeepSeek-V4.1-Flash) | not separately metered |
+| **Total Nebius** | **well under $30** |
 
 Gemini: $0 (free tier only).
 
 ---
 
-*Last updated: Phase 0 setup.*
+## Status: COMPLETE
 
----
+All phases done as of 2026-11-25. Remaining optional ideas:
 
-## Finish session
-
-Goal: make Citewise recruiter-ready (Parts 1 to 9 of the finish prompt).
-
-**Done**
-- Code-review bug fixes (`d44cbe8`).
-- Render deployment, live demo defaults to `dense_400` to fit 512 MB (`5a8b193`).
-- Part 2: percentage metrics, DeepSeek judge, experiment runner (`bb09782`).
-
-**In progress**
-- Part 1 (subagent): eval set with ground truth, unanswerable and adversarial questions, dev/test re-split. Files are uncommitted until reviewed.
-- Part 3 (parametric leakage): design settled, code not yet written. Plan: `answer_v2` prompt, `guardrails.verify_claims`, small-to-big context, `top_k_context` 6 vs 10, deterministic point IDs (`uuid5`) plus `position` payload, then configs A, B, C, D, E and L.
-
-**Next**
-1. Review and commit Part 1.
-2. Implement Part 3 with unit tests; rebuild the local index; run dev experiments; choose the config on dev; run test once for the final config, A and L; make charts.
-3. Parts 4 to 9: hand-check CSVs (user fills `human_ok`), deployment memory and cold start, integration tests and CI, README rewrite, interview notes, independent review.
-
-**For the user**
-- Rotate the Qdrant API key (Qdrant dashboard, then Render env var, then `.env`).
-- Add the `NEBIUS_API_KEY` GitHub secret for the smoke-eval CI job.
+- Human-validate a sample of the 190 ground-truth questions (the main honesty gap).
+- Enlarge the dev set to 150+ questions so single-answer noise is under 2 points.
+- Re-run eval after corpus updates to track metric drift.
+- Add a nightly Langfuse monitor alert for unusual refusal rates.
+- Persistent rate-limit counters (Redis) so a Render restart cannot reset them.
 - Fill `human_ok` in both hand-check CSVs and record the demo GIF.

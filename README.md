@@ -105,8 +105,8 @@ treat that improvement as anecdotal.
   in the results table above; the correctness interval for L2_dense spans 56–74%.
 - **The fixes are not shown to help on test.** See above.
 - **Live behaviour:** some answerable questions are still refused, in line with the 5.1% test false-refusal rate (for example "What are the Council Tax bands?", because the added Council Tax band page is a lookup service and does not list band values). "What is the State Pension age?" now answers with a citation after the corpus extension, but it says the guidance gives no fixed age. The API returns every retrieved source; the web page shows the sources the answer cites `[n]` first and puts the rest under "Other pages searched". Eval metric definitions are unchanged: they still score the full retrieved list.
-- **Live-service limits are in memory:** the rate limiter (10 per minute) and the daily spend cap
-  (£0.50) reset on restart.
+- **Live-service limits are in memory:** the rate limiter (10 per minute) resets on restart; the
+  daily spend cap (£0.50) resets at UTC midnight.
 
 ## How it works
 

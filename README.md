@@ -6,9 +6,7 @@
 
 **Live demo: https://citewise-v5w7.onrender.com/** (free tier: after idle the first load takes about a minute while the server wakes up)
 
-<!-- TODO(Hein): record a short demo GIF and put it at images/demo.gif, then uncomment:
 ![Citewise demo](images/demo.gif)
--->
 
 Citewise answers questions about benefits, employment, housing and driving using 3,335 GOV.UK
 pages. Every claim carries a numbered citation to a live GOV.UK page, and the system refuses when

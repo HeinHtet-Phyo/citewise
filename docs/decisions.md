@@ -112,7 +112,7 @@ We need a model that:
 ### Decision
 
 Use `Qwen/Qwen3-235B-A22B-Instruct-2507` via the Nebius Token Factory API (OpenAI-compatible),
-routed through LiteLLM with `base_url=https://api.tokenfactory.nebius.com/v1`.
+called directly through the openai SDK with `base_url=https://api.tokenfactory.nebius.com/v1`.
 
 Qwen3-235B-A22B is a Mixture-of-Experts model: 235B total parameters, 22B active per forward
 pass. This gives near-frontier quality at a cost comparable to a dense 22B model.
@@ -128,8 +128,8 @@ from the output as a defensive fallback.
 - **Total: ~$0.80 per full run**
 
 Pricing source: Nebius Token Factory, November 2026 — $0.20/M input, $0.60/M output.
-LiteLLM does not have Nebius rates built in; a manual fallback in `generate.py` computes
-cost from `response.usage` token counts.
+The openai SDK does not carry pricing tables; cost is computed from `response.usage` token counts
+against the manual pricing dict in `generate.py`.
 
 ### Trade-offs
 
@@ -252,7 +252,7 @@ Made-up rate: A 6.5%, B 11.1%, C 4.5%, D 7.0%, E 4.8%. Correct (of answerable): 
 
 ### Context
 
-Render's free tier has 512 MB. Measured in Docker (`eval/results/memory.json`, `scripts/measure_memory.py`): `hybrid_400_rerank` peaks at 1,945 MiB over 10 requests; the dense configs peak at about 375 MiB (idle 245 MiB).
+Render's free tier has 512 MB. Measured in Docker (`eval/results/memory.json`, `scripts/measure_memory.py`): `hybrid_400_rerank` peaks at 1,945 MiB over 10 requests; the dense configs now peak at **221 MiB** (idle ~247 MiB) after replacing LiteLLM with the openai SDK (see ADR-010).
 
 ### Decision
 
@@ -265,3 +265,25 @@ The deployed config has its own test numbers (README). Retrieval is weaker than 
 ## ADR-009 — Refusal fix: `L2_dense`
 
 Live spot checks showed common questions being refused. Diagnosis (20 questions, step by step): retrieval scores were high and the threshold is 0; refusals came from the LLM (two corpus gaps and one over-strict prompt) and from the claim verifier flagging "the guidance does not cover" sentences. Decision: answer prompt v3 (partial answers allowed) and a verifier filter for limitation sentences, deployed as `L2_dense`. Dev: refusal recall stayed 100.0% (n=15); correctness equal at 72.3%. Test (run once): recall 96.7%, correct 65.3% (down from 69.4%), made-up 7.4%. Consequence: fewer visible refusals on real questions at the price of slightly lower measured correctness on test; both numbers are in the README.
+
+## ADR-010 — Replace LiteLLM with openai SDK to fix OOM on Render
+
+**Date:** 26 November 2026  
+**Status:** Implemented
+
+### Context
+
+After launch the live service crashed in a loop with "Ran out of memory (used over 512 MB)". Local measurements had shown ~378 MiB for `L2_dense`, leaving ~134 MiB headroom, but those measurements were taken on a Mac where ONNX Runtime saw 10 CPUs and allocated proportionally. Reproducing with `docker run --memory=512m` confirmed: the first `/ask` call reached 492 MiB and the container was OOM-killed.
+
+Investigation:
+- Thread limits (`OMP_NUM_THREADS=1`, `ONNXRUNTIME_MAX_INTEROP_THREADS=1`, `fastembed threads=1`) reduced peak to 459 MiB.
+- ONNX arena strategy `kSameAsRequested` saved a further ~2 MiB.
+- Neither was enough. Profiling found **LiteLLM** (175 MB on disk, ~240 MiB resident) as the dominant consumer.
+
+### Decision
+
+Replace LiteLLM with the openai SDK (28 MB). Nebius exposes an OpenAI-compatible endpoint, so the change was mechanical: `litellm.completion(model=..., base_url=..., ...)` → `OpenAI(api_key=..., base_url=...).chat.completions.create(model=..., ...)`. Cost is computed from the manual pricing table already present in `generate.py`. LiteLLM moved to `[dev]` optional extras so `eval/judge.py` (which still uses it) and its tests continue to work.
+
+### Consequences
+
+Peak RSS under `--memory=512m` across 10 questions: **492 MiB (OOM) → 221 MiB** (57% reduction). The 512 MB Render limit now has a 291 MiB safety margin. No change to answers, eval numbers, or the external API.

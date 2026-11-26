@@ -138,7 +138,7 @@ Key behaviours:
 - Out-of-scope refusal: clearly non-GOV.UK questions refused with `out_of_scope`.
 - Citation validation: every `[n]` must refer to a provided source; strip invalid markers.
 - LLM cache: keyed on `hash(model + prompt)`, stored in `.llm_cache/`.
-- LiteLLM for all LLM calls; cost tracked per call.
+- openai SDK for all LLM calls against Nebius's OpenAI-compatible endpoint; cost tracked per call.
 
 ---
 
@@ -275,7 +275,7 @@ Each subagent receives: the interface contract, the folder structure, CLAUDE.md,
 | HTML parsing | beautifulsoup4 | ≥4.12 |
 | Vector DB client | qdrant-client | ≥1.12 |
 | Embeddings + sparse | fastembed | ≥0.4 |
-| LLM routing | litellm | ≥1.52 |
+| LLM calls | openai | ≥1.0 |
 | Testing | pytest | ≥8.3 |
 | Lint/format | ruff | ≥0.7 |
 | Type checking | mypy | ≥1.13 |

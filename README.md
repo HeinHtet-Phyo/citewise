@@ -130,12 +130,17 @@ not fit Render's 512 MB free tier.
 
 | Deployed config | Idle | Peak (10 requests) | Cold start | First request |
 |---|---|---|---|---|
-| L2_dense, Langfuse tracing on | 247.3 MiB | 377.6 MiB | 3.4 s | 4.5 s |
+| L2_dense, Langfuse tracing on | 247.3 MiB | **221.0 MiB** | 3.4 s | 4.5 s |
 | hybrid_400_rerank | 245.4 MiB | 1,944.6 MiB | 1.7 s | n/a |
 
-Measured locally in Docker (`eval/results/memory.json`, `scripts/measure_memory.py`) with live LLM calls and tracing enabled, which leaves about 134 MiB of headroom under Render's 512 MB. On Render's free tier after about 17 minutes idle, the first health response took 56.3 s, the first question after that 10.7 s, and the next 2.7 s (one measurement, `eval/results/render_cold_start.json`).
+Peak measured locally under `docker run --memory=512m` with 10 live questions and tracing enabled
+(`eval/results/memory.json`). The drop from the original 377.6 MiB to 221 MiB came from replacing
+LiteLLM (~175 MB package, ~240 MiB resident) with the lighter openai SDK (~28 MB) — Nebius exposes
+an OpenAI-compatible endpoint so the swap was straightforward (see [Bug 3](#bug-3-out-of-memory-on-render)).
+On Render's free tier after about 17 minutes idle, the first health response took 56.3 s, the first
+question after that 10.7 s, and the next 2.7 s (one measurement, `eval/results/render_cold_start.json`).
 
-**Stack:** Python 3.11 · FastAPI · Pydantic v2 · Qdrant · fastembed · LiteLLM · Nebius
+**Stack:** Python 3.11 · FastAPI · Pydantic v2 · Qdrant · fastembed · openai SDK · Nebius
 (Qwen3-235B generator, Qwen3-30B verifier, DeepSeek-V4.1-Flash judge) · Docker · GitHub Actions.
 
 **Corpus:** 3,335 GOV.UK pages (790 answer, 860 guide, 1,685 detailed guide), section-merge
@@ -164,11 +169,25 @@ Every `/ask` request can produce one [Langfuse](https://langfuse.com) trace, wit
 
 ![A Langfuse trace for one answered question](images/langfuse_trace.png)
 
-Tracing is off unless `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` are set. When on, traces are posted from a background thread to Langfuse's OpenTelemetry endpoint and every error is swallowed, so tracing cannot slow down or break an answer (`src/citewise/observability.py`, no extra SDK). Peak memory with tracing on was 377.6 MiB (see above).
+Tracing is off unless `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` are set. When on, traces are posted from a background thread to Langfuse's OpenTelemetry endpoint and every error is swallowed, so tracing cannot slow down or break an answer (`src/citewise/observability.py`, no extra SDK). Peak memory with tracing on is 221 MiB (see above).
+
+## Bug 3: out of memory on Render
+
+The live service crashed in a loop ("Ran out of memory, used over 512 MB") shortly after launch.
+Local measurements had shown ~378 MiB, which looked safe, but that was measured on a Mac with 10
+visible CPUs; the same number on Render meant ONNX Runtime allocated one thread per CPU plus a
+proportional memory arena. Reproduced with `docker run --memory=512m` — the first `/ask` call
+consumed 492 MiB and the container was OOM-killed.
+
+Thread limits (`OMP_NUM_THREADS=1`, `ONNXRUNTIME_MAX_INTEROP_THREADS=1`, etc.) brought it to
+459 MiB; ONNX arena strategy `kSameAsRequested` saved another 2 MiB. Neither was enough. The root
+cause was **LiteLLM**: its 175 MB package loaded ~240 MiB resident at runtime. Nebius exposes an
+OpenAI-compatible endpoint, so replacing LiteLLM with the openai SDK (28 MB) dropped the peak to
+**221 MiB** — 291 MiB saved, 55% below the 512 MB limit.
 
 ## Engineering
 
-- 120 tests (unit and integration), `ruff`, `mypy --strict`, run in GitHub Actions on every push.
+- 121 tests (114 unit + 7 integration), `ruff`, `mypy --strict`, run in GitHub Actions on every push.
 - An optional smoke-eval CI job runs only when a `NEBIUS_API_KEY` repository secret is set.
 - Rate limit (10 per minute per client, keyed on `X-Forwarded-For` behind Render's proxy) and a daily spend cap that returns HTTP 503 when exhausted.
 - Embedding and reranker models are baked into the Docker image so there is no download at start-up.

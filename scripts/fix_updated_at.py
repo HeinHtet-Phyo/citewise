@@ -85,7 +85,9 @@ def main() -> None:
     total_to_update = sum(len(ids) for ids in updates.values())
     log.info(
         "Points to update: %d  unchanged: %d  no raw json: %d",
-        total_to_update, unchanged, skipped,
+        total_to_update,
+        unchanged,
+        skipped,
     )
 
     if not updates:

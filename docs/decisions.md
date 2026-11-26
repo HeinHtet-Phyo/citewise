@@ -266,6 +266,17 @@ The deployed config has its own test numbers (README). Retrieval is weaker than 
 
 Live spot checks showed common questions being refused. Diagnosis (20 questions, step by step): retrieval scores were high and the threshold is 0; refusals came from the LLM (two corpus gaps and one over-strict prompt) and from the claim verifier flagging "the guidance does not cover" sentences. Decision: answer prompt v3 (partial answers allowed) and a verifier filter for limitation sentences, deployed as `L2_dense`. Dev: refusal recall stayed 100.0% (n=15); correctness equal at 72.3%. Test (run once): recall 96.7%, correct 65.3% (down from 69.4%), made-up 7.4%. Consequence: fewer visible refusals on real questions at the price of slightly lower measured correctness on test; both numbers are in the README.
 
+## ADR-011 — Payload field preference: `updated_at` over `public_updated_at`
+
+**Date:** 26 November 2026  
+**Status:** Implemented
+
+GOV.UK's `public_updated_at` field is frequently frozen at an old date (e.g. 2015-03-09 for Statutory Sick Pay) even when page content is updated; `updated_at` reflects the actual CMS edit time. `clean.py` now prefers `updated_at` with a fallback to `public_updated_at` for pages that carry only the latter field.
+
+**Incident note:** a backfill script (`fix_updated_at.py`) initially used `qdrant_client.overwrite_payload()`, which replaces the *entire* payload with the supplied dict — destroying all other fields (text, url, tokens, etc.) and breaking the live pipeline. The bug was caught by testing the live site (KeyError on retrieval). Fixed by switching to `set_payload()` (partial update), then re-indexing from regenerated JSONL.
+
+---
+
 ## ADR-010 — Replace LiteLLM with openai SDK to fix OOM on Render
 
 **Date:** 26 November 2026  

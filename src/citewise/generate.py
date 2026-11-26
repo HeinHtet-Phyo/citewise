@@ -1,4 +1,4 @@
-"""LLM generation with LiteLLM, file-based caching, and cost tracking."""
+"""LLM generation with OpenAI SDK, file-based caching, and cost tracking."""
 
 from __future__ import annotations
 
@@ -9,8 +9,7 @@ import re
 import time
 from pathlib import Path
 
-import litellm
-from litellm.exceptions import RateLimitError, ServiceUnavailableError, Timeout
+from openai import APIStatusError, APITimeoutError, OpenAI, RateLimitError
 
 from citewise.config import RagConfig, settings
 from citewise.observability import record_llm
@@ -28,13 +27,7 @@ _SYSTEM_PROMPTS = {
 # Approximate USD → GBP conversion used for cost estimates.
 _USD_TO_GBP = 0.79
 
-# litellm is chatty at INFO; suppress unless debugging.
-litellm.suppress_debug_info = True
-# Some newer models don't support all params (e.g. temperature); drop silently.
-litellm.drop_params = True
-
 # Manual pricing for Nebius models (USD per token).
-# LiteLLM does not have these rates in its built-in table.
 # Source: Nebius Token Factory pricing page, November 2026.
 _NEBIUS_PRICING: dict[str, tuple[float, float]] = {
     "Qwen/Qwen3-235B-A22B-Instruct-2507": (0.20e-6, 0.60e-6),
@@ -44,8 +37,21 @@ _NEBIUS_PRICING: dict[str, tuple[float, float]] = {
 }
 
 # Qwen3 models emit <think>…</think> blocks in thinking mode; strip them.
-# Greedy match handles nested <think> tags (non-greedy stops at the first </think>).
 _THINK_RE = re.compile(r"<think>.*</think>", re.DOTALL | re.IGNORECASE)
+
+# Lazy singleton — created on first LLM call.
+_client: OpenAI | None = None
+
+
+def _get_client() -> OpenAI:
+    global _client
+    if _client is None:
+        _client = OpenAI(
+            api_key=settings.nebius_api_key or "dummy",
+            base_url=settings.nebius_base_url,
+            timeout=120.0,
+        )
+    return _client
 
 
 def _cache_path(cache_dir: str, key: str) -> Path:
@@ -90,46 +96,63 @@ def generate_answer(
     if feedback:
         messages[1]["content"] += f"\n\n{feedback}"
 
-    cache_key = _prompt_hash(config.llm_model, messages)
+    # Strip litellm's "openai/" router prefix — not used with the direct SDK.
+    model_name = config.llm_model.removeprefix("openai/")
+    cache_key = _prompt_hash(model_name, messages)
 
     if settings.llm_cache_enabled:
         cached = _cache_path(settings.llm_cache_dir, cache_key)
         if cached.exists():
             log.debug("LLM cache hit: %s", cache_key[:12])
             data = json.loads(cached.read_text(encoding="utf-8"))
-            record_llm("llm.generation", config.llm_model, None, None, data["cost_gbp"], 0)
+            record_llm("llm.generation", model_name, None, None, data["cost_gbp"], 0)
             return data["text"], data["cost_gbp"], 0
 
-    # Route API credentials: Nebius models start with "openai/", Gemini otherwise.
-    _is_nebius = config.llm_model.startswith("openai/")
-    _api_key = settings.nebius_api_key if _is_nebius else (settings.gemini_api_key or None)
-    _base_url = settings.nebius_base_url if _is_nebius else None
-
     # Disable Qwen3 extended-thinking mode so the output is clean answer text.
-    _extra_body: dict[str, object] = {}
-    if _is_nebius and "Qwen3" in config.llm_model:
-        _extra_body["enable_thinking"] = False
+    extra_body: dict[str, object] = {}
+    if "Qwen3" in model_name:
+        extra_body["enable_thinking"] = False
 
     t0 = time.monotonic()
     _backoff = 10.0
+    response = None
     for _attempt in range(3):
         try:
-            response = litellm.completion(
-                model=config.llm_model,
-                messages=messages,
+            response = _get_client().chat.completions.create(
+                model=model_name,
+                messages=messages,  # type: ignore[arg-type]
                 temperature=config.temperature,
                 max_tokens=config.max_tokens,
-                api_key=_api_key or None,
-                base_url=_base_url or None,
-                timeout=120,
-                extra_body=_extra_body or None,
+                extra_body=extra_body or None,
             )
             break
-        except (RateLimitError, ServiceUnavailableError, Timeout) as exc:
+        except RateLimitError as exc:
             if _attempt == 2:
                 raise
             log.warning(
-                "LLM rate-limit/unavailable (attempt %d/3) — backing off %.0fs: %s",
+                "LLM rate-limit (attempt %d/3) — backing off %.0fs: %s",
+                _attempt + 1,
+                _backoff,
+                exc,
+            )
+            time.sleep(_backoff)
+            _backoff = min(_backoff * 2, 20.0)
+        except APIStatusError as exc:
+            if exc.status_code != 503 or _attempt == 2:
+                raise
+            log.warning(
+                "LLM 503 (attempt %d/3) — backing off %.0fs: %s",
+                _attempt + 1,
+                _backoff,
+                exc,
+            )
+            time.sleep(_backoff)
+            _backoff = min(_backoff * 2, 20.0)
+        except APITimeoutError as exc:
+            if _attempt == 2:
+                raise
+            log.warning(
+                "LLM timeout (attempt %d/3) — backing off %.0fs: %s",
                 _attempt + 1,
                 _backoff,
                 exc,
@@ -138,34 +161,30 @@ def generate_answer(
             _backoff = min(_backoff * 2, 20.0)
     latency_ms = int((time.monotonic() - t0) * 1000)
 
+    assert response is not None  # loop always breaks or raises
     raw_text: str = response.choices[0].message.content or ""
-    # Strip any residual <think>…</think> blocks if thinking mode wasn't fully disabled.
+    # Strip any residual <think>…</think> blocks.
     text = _THINK_RE.sub("", raw_text).strip()
 
-    try:
-        cost_usd: float = litellm.completion_cost(completion_response=response)
-    except Exception:
-        cost_usd = 0.0
-    # Fallback: LiteLLM doesn't have Nebius pricing; compute from manual rates.
-    if cost_usd == 0.0 and _is_nebius and response.usage:
-        _model_key = config.llm_model.removeprefix("openai/")
-        if _model_key in _NEBIUS_PRICING:
-            _in, _out = _NEBIUS_PRICING[_model_key]
-            cost_usd = (response.usage.prompt_tokens or 0) * _in + (
-                response.usage.completion_tokens or 0
-            ) * _out
+    # Compute cost from manual pricing table.
+    cost_usd = 0.0
+    if response.usage and model_name in _NEBIUS_PRICING:
+        _in, _out = _NEBIUS_PRICING[model_name]
+        cost_usd = (response.usage.prompt_tokens or 0) * _in + (
+            response.usage.completion_tokens or 0
+        ) * _out
     cost_gbp = round(cost_usd * _USD_TO_GBP, 6)
 
     usage = response.usage
     record_llm(
         "llm.generation",
-        config.llm_model,
+        model_name,
         usage.prompt_tokens if usage else None,
         usage.completion_tokens if usage else None,
         cost_gbp,
         latency_ms,
     )
-    log.info("LLM %s: %d ms, $%.6f (£%.6f)", config.llm_model, latency_ms, cost_usd, cost_gbp)
+    log.info("LLM %s: %d ms, $%.6f (£%.6f)", model_name, latency_ms, cost_usd, cost_gbp)
 
     if settings.llm_cache_enabled:
         cache_dir = Path(settings.llm_cache_dir)

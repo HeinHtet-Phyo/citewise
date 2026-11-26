@@ -20,12 +20,24 @@ RUN pip install --no-cache-dir -e .
 COPY src/ src/
 COPY app.py ./
 
+# Limit ONNX Runtime and linear-algebra libraries to one thread each.
+# Without this, they claim all host CPUs (Render shows 32+) and allocate
+# a proportionally large memory arena, causing OOM under the 512 MB limit.
+ENV OMP_NUM_THREADS=1 \
+    MKL_NUM_THREADS=1 \
+    OPENBLAS_NUM_THREADS=1 \
+    ONNXRUNTIME_MAX_INTEROP_THREADS=1 \
+    ONNXRUNTIME_MAX_INTRAOP_THREADS=1 \
+    FASTEMBED_CACHE_PATH=/app/models
+
 # Bake the embedding and reranker models into the image so a cold start does not download them.
-ENV FASTEMBED_CACHE_PATH=/app/models
+# threads=1 matches the runtime limit set above.
 RUN python -c "from fastembed import TextEmbedding, SparseTextEmbedding; \
 from fastembed.rerank.cross_encoder import TextCrossEncoder; \
-TextEmbedding('BAAI/bge-small-en-v1.5'); SparseTextEmbedding('Qdrant/bm25'); \
-TextCrossEncoder('Xenova/ms-marco-MiniLM-L-6-v2')"
+p=[('CPUExecutionProvider',{'arena_extend_strategy':'kSameAsRequested'})]; \
+TextEmbedding('BAAI/bge-small-en-v1.5', threads=1, providers=p); \
+SparseTextEmbedding('Qdrant/bm25', threads=1, providers=p); \
+TextCrossEncoder('Xenova/ms-marco-MiniLM-L-6-v2', threads=1, providers=p)"
 
 # Non-root user for security
 RUN useradd -m appuser && chown -R appuser /app
@@ -34,4 +46,5 @@ USER appuser
 EXPOSE 8000
 
 # PORT env var is injected by Render; falls back to 8000 for local use.
-CMD ["sh", "-c", "exec python -m uvicorn citewise.api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# --workers 1: a second worker would double resident memory on a 512 MB host.
+CMD ["sh", "-c", "exec python -m uvicorn citewise.api.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]

@@ -23,8 +23,8 @@ dependencies = [
     "qdrant-client>=1.12,<2",
     # Embeddings (dense + sparse BM25) — CPU-only
     "fastembed>=0.4,<0.6",
-    # LLM routing (Gemini + Nebius)
-    "litellm>=1.52,<2",
+    # LLM calls (Nebius OpenAI-compatible API)
+    "openai>=1.0,<2",
     # Tracing (optional — only used when keys are set)
     # Token counting
     "tiktoken>=0.8,<1",
@@ -37,6 +37,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "matplotlib>=3.8",
+    # eval scripts and their tests
+    "litellm>=1.52,<2",
     "pytest>=8.3,<9",
     "pytest-asyncio>=0.24,<1",
     "pytest-httpx>=0.32,<1",
@@ -69,7 +71,7 @@ warn_unused_configs = true
 ignore_missing_imports = false
 
 [[tool.mypy.overrides]]
-module = ["fastembed.*", "litellm.*", "qdrant_client.*"]
+module = ["fastembed.*", "qdrant_client.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

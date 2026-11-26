@@ -41,11 +41,14 @@ _reranker: TextCrossEncoder | None = None
 _qdrant: QdrantClient | None = None
 
 
+_CPU_PROVIDER = [("CPUExecutionProvider", {"arena_extend_strategy": "kSameAsRequested"})]
+
+
 def _get_reranker() -> TextCrossEncoder:
     global _reranker
     if _reranker is None:
         log.info("Loading reranker %s", RERANKER_MODEL)
-        _reranker = TextCrossEncoder(RERANKER_MODEL)
+        _reranker = TextCrossEncoder(RERANKER_MODEL, threads=1, providers=_CPU_PROVIDER)
     return _reranker
 
 

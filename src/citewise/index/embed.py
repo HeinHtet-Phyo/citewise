@@ -20,11 +20,14 @@ _dense: TextEmbedding | None = None
 _sparse: SparseTextEmbedding | None = None
 
 
+_CPU_PROVIDER = [("CPUExecutionProvider", {"arena_extend_strategy": "kSameAsRequested"})]
+
+
 def _get_dense() -> TextEmbedding:
     global _dense
     if _dense is None:
         log.info("Loading dense model %s", DENSE_MODEL)
-        _dense = TextEmbedding(DENSE_MODEL)
+        _dense = TextEmbedding(DENSE_MODEL, threads=1, providers=_CPU_PROVIDER)
     return _dense
 
 
@@ -32,7 +35,7 @@ def _get_sparse() -> SparseTextEmbedding:
     global _sparse
     if _sparse is None:
         log.info("Loading sparse model %s", SPARSE_MODEL)
-        _sparse = SparseTextEmbedding(SPARSE_MODEL)
+        _sparse = SparseTextEmbedding(SPARSE_MODEL, threads=1, providers=_CPU_PROVIDER)
     return _sparse
 
 

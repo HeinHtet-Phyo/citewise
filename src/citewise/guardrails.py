@@ -7,10 +7,8 @@ import re
 import time
 from pathlib import Path
 
-import litellm
-
 from citewise.config import settings
-from citewise.generate import _cache_path, _prompt_hash
+from citewise.generate import _cache_path, _get_client, _prompt_hash
 from citewise.observability import record_llm
 
 # Patterns that indicate a question is unsafe or a prompt injection attempt.
@@ -111,33 +109,34 @@ def verify_claims(answer: str, sources: list[str]) -> tuple[list[str], float]:
         record_llm("llm.claim_verification", _VERIFY_MODEL, None, None, 0.0, 0)
     else:
         t0 = time.monotonic()
+        verify_model = _VERIFY_MODEL.removeprefix("openai/")
         try:
-            response = litellm.completion(
-                model=_VERIFY_MODEL,
-                messages=messages,
+            response = _get_client().chat.completions.create(
+                model=verify_model,
+                messages=messages,  # type: ignore[arg-type]
                 temperature=0.0,
                 max_tokens=200,
-                base_url=settings.nebius_base_url or None,
-                api_key=settings.nebius_api_key or None,
-                timeout=60,
+                extra_body={"enable_thinking": False},
             )
         except Exception:
             return [], 0.0
         text = response.choices[0].message.content or ""
         usage = response.usage
-        cost = round(
-            (
-                (usage.prompt_tokens or 0) * _VERIFY_PRICE_USD[0]
-                + (usage.completion_tokens or 0) * _VERIFY_PRICE_USD[1]
+        cost = 0.0
+        if usage:
+            cost = round(
+                (
+                    (usage.prompt_tokens or 0) * _VERIFY_PRICE_USD[0]
+                    + (usage.completion_tokens or 0) * _VERIFY_PRICE_USD[1]
+                )
+                * _USD_TO_GBP,
+                6,
             )
-            * _USD_TO_GBP,
-            6,
-        )
         record_llm(
             "llm.claim_verification",
             _VERIFY_MODEL,
-            usage.prompt_tokens,
-            usage.completion_tokens,
+            usage.prompt_tokens if usage else None,
+            usage.completion_tokens if usage else None,
             cost,
             int((time.monotonic() - t0) * 1000),
         )

@@ -162,6 +162,13 @@ async def ask(
         )
     config = _CONFIGS[body.config_name]
     log.info("POST /ask config=%s question=%.60s", config.config_name, body.question)
-    answer = answer_question(body.question, config)
+    try:
+        answer = answer_question(body.question, config)
+    except Exception as exc:
+        log.exception("answer_question raised %s: %s", type(exc).__name__, exc)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Pipeline error ({type(exc).__name__}). Check server logs.",
+        ) from exc
     _budget.add(answer.cost_gbp)
     return answer

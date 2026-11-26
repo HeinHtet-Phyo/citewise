@@ -373,14 +373,18 @@
       });
 
       if (res.status === 429) {
-        throw new Error("Rate limit reached (10 requests/minute). Please wait a moment.");
+        throw new Error("Rate limit reached (10 requests/minute). Please wait a moment and try again.");
       }
       if (res.status === 503) {
-        throw new Error("The demo's daily budget has been used up. Please try again tomorrow.");
+        throw new Error("The demo’s daily budget has been used up. Please try again tomorrow.");
+      }
+      if (res.status === 502 || res.status === 504) {
+        throw new Error("The server didn’t respond (gateway error — this sometimes happens on the free tier). Please try again in a moment.");
       }
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ detail: res.statusText }));
-        throw new Error(err.detail || "Request failed");
+        const err = await res.json().catch(() => null);
+        const msg = err && err.detail ? err.detail : `Server error (HTTP ${res.status}). Please try again.`;
+        throw new Error(msg);
       }
 
       const data = await res.json();

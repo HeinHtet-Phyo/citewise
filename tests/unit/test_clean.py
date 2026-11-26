@@ -62,6 +62,37 @@ def test_page_missing_body_skipped(tmp_path: Path) -> None:
     assert clean_page(empty) is None
 
 
+def test_updated_at_preferred_over_public_updated_at(tmp_path: Path) -> None:
+    """updated_at (actual CMS edit time) beats public_updated_at when both are present."""
+    p = tmp_path / "rate_page.json"
+    p.write_text(
+        '{"base_path":"/statutory-sick-pay","title":"SSP","document_type":"answer",'
+        '"locale":"en",'
+        '"public_updated_at":"2015-03-09T14:15:47Z",'
+        '"updated_at":"2026-10-27T09:45:51Z",'
+        '"details":{"body":"<p>SSP is £123.25 a week.</p>"}}',
+        encoding="utf-8",
+    )
+    page = clean_page(p)
+    assert page is not None
+    assert page.updated_at == "2026-10-27"
+
+
+def test_updated_at_falls_back_to_public_updated_at(tmp_path: Path) -> None:
+    """Pages without updated_at still get a date from public_updated_at."""
+    p = tmp_path / "old_page.json"
+    p.write_text(
+        '{"base_path":"/test","title":"Test","document_type":"answer",'
+        '"locale":"en",'
+        '"public_updated_at":"2024-06-01T00:00:00Z",'
+        '"details":{"body":"<p>Some content.</p>"}}',
+        encoding="utf-8",
+    )
+    page = clean_page(p)
+    assert page is not None
+    assert page.updated_at == "2024-06-01"
+
+
 def test_html_to_text_headings() -> None:
     html = "<h2>Eligibility</h2><p>You must be over 16.</p>"
     text = _html_to_text(html)

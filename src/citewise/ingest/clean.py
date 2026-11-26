@@ -149,7 +149,10 @@ def clean_page(raw_path: Path) -> CleanPage | None:
     title: str = data.get("title", "")
     doc_type: str = data.get("document_type", data.get("schema_name", ""))
     fmt = _FORMAT_MAP.get(doc_type, doc_type)
-    updated_at: str = data.get("public_updated_at", "")[:10]  # ISO date only
+    # Use updated_at (actual last CMS edit) rather than public_updated_at (which GOV.UK
+    # editors often leave unchanged when updating rates/figures). Falls back to
+    # public_updated_at for the small number of pages that only carry that field.
+    updated_at: str = (data.get("updated_at") or data.get("public_updated_at") or "")[:10]
     locale: str = data.get("locale", "en")
 
     if locale != "en":
